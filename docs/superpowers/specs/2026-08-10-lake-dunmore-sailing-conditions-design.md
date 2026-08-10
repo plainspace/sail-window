@@ -35,11 +35,6 @@ how stable the forecast has been, and what nearly qualified but did not.
 
 **Out of scope (deferred to phase 2):**
 
-- Calendar overlay. Blocking sailing windows against meetings was the original
-  motivating idea and was explicitly deferred during design so v1 stays small. The
-  intended source when it lands is Google Calendar private `.ics` feed URLs stored
-  in env vars, polled directly. This choice was made specifically to avoid OAuth,
-  a consent screen, and refresh-token maintenance for a single-user app.
 - Calibration log UI. See "Phase 2" below. The v1 snapshot store exists to make it
   possible later.
 - Push notifications. Deferred as a new delivery surface rather than because the idea
@@ -48,6 +43,13 @@ how stable the forecast has been, and what nearly qualified but did not.
 
 **Explicitly not building:** a settings screen, user accounts, multi-location
 support, or a second weather source.
+
+**Cut on 2026-08-10:** the calendar overlay. Blocking sailing windows against
+meetings was the original motivating idea for this app, and it is now dropped
+entirely rather than deferred. The app is a weather filter; scheduling stays out of
+it. This is recorded rather than deleted silently, because the problem statement of
+the whole project began as "weather plus calendar" and a future reader will otherwise
+wonder where the calendar went.
 
 ## The rules
 

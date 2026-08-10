@@ -1692,7 +1692,7 @@ git commit -m "Add wind map with lake outline, arrows, and fetch label"
 
 ## Deferred to phase 2, not in this plan
 
-- Calendar overlay via private `.ics` feeds.
+- ~~Calendar overlay~~ ... cut entirely on 2026-08-10, not deferred. See the spec.
 - Calibration log (observed conditions vs forecast).
 - Push notifications.
 - Hour scrubbing that redraws the map on hover. The spec calls for it; this plan renders the map for the next window only, so `WindMap` stays a server component and the page needs no client-side state. Adding the scrubber later means making `WindMap` a client component and lifting a selected-hour index into it. Nothing in this plan blocks that.
