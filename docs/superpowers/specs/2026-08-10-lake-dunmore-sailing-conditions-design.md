@@ -10,7 +10,7 @@
 
 Deciding whether to sail at Lake Dunmore, Vermont currently means reading a general
 weather forecast and doing the filtering by hand, every time. The forecast answers
-"what will the weather be." The actual question is "when in the next six days can I
+"what will the weather be." The actual question is "when in the next week can I
 sail," which is a different question with a yes/no answer.
 
 This app answers that question directly: given the NWS forecast, it returns the
@@ -176,8 +176,8 @@ type HourlyConditions = {
   startTime: string        // ISO 8601 with offset, as returned by NWS
   windKt: number           // sustained, converted from NWS mph
   gustKt: number | null    // null when NWS omits gust data for the hour
-  windDirection: string    // cardinal, e.g. "NW"
-  windDirectionDeg: number
+  windDirectionDeg: number // from NWS, degrees
+  windDirection: string    // cardinal, e.g. "NW"; derived by this app from degrees
   precipProbability: number // 0-100
   temperatureF: number
 }
@@ -241,35 +241,72 @@ alternative makes the app useless.
 
 ## NWS integration
 
-Endpoint chain: `/points/{lat},{lon}` resolves the grid office and coordinates, then
-`/gridpoints/{office}/{x},{y}/forecast/hourly` returns the hourly series. The horizon
-is approximately 156 hours (about six and a half days).
+**Verified against the live API on 2026-08-10.** The findings below are observed, not
+assumed, and two of them changed the design.
 
-### Verified-unknown items
+### Endpoint
 
-These were not confirmed against the live API during design, because network access
-was unavailable. Each must be checked as the first implementation step, and the
-first is load-bearing.
+`/points/43.885,-73.085` resolves to grid **BTV/97,30** and reports
+`timeZone: "America/New_York"` and a `relativeLocation` of 7.2 km north of Brandon,
+VT, which confirms the coordinates land on the right valley.
 
-1. **`windGust` may not appear on the hourly forecast endpoint.** Gust data is
-   believed to live on the raw `/gridpoints/{office}/{x},{y}` time-series rather than
-   on `/forecast/hourly`. If confirmed, the fetch layer must request both and join on
-   timestamp. Confidence: moderate. **The gust veto depends entirely on this**, so it
-   is the first thing to verify before any other work.
-2. **`windSpeed` is a string, and may be a range.** NWS returns values like
-   `"10 mph"` but also `"5 to 10 mph"`. The parser must handle both. For a range, the
-   whole range must satisfy the gate: test the **lower** bound against the 7 kt
-   minimum and the **upper** bound against the 20 kt maximum. So `"5 to 10 mph"`
-   fails as too light, and `"15 to 25 kt"` fails as too strong. An ambiguous forecast
-   never produces a qualifying hour.
-3. **NWS rejects requests without a `User-Agent` header** carrying contact
-   information. Confidence: high.
-4. **Units.** NWS returns mph or km/h depending on request parameters. Conversion to
-   knots happens once, in `lib/nws.ts`, at the boundary. Nothing downstream sees any
-   other unit.
-5. **Lake Dunmore coordinates** are approximately 43.885 N, -73.085 W. Confidence:
-   moderate. Confirm before baking in, since the grid cell is about 2.5 km and a bad
-   coordinate silently forecasts the wrong valley.
+The app then uses **one endpoint only**: the raw gridpoint time-series at
+`/gridpoints/BTV/97,30`. The `/forecast/hourly` endpoint is **not used**.
+
+### Why the raw gridpoint rather than /forecast/hourly
+
+`/forecast/hourly` was the original plan. It is the wrong choice, for three observed
+reasons:
+
+1. **It has no gusts at all.** `windGust` appears in zero of its 156 periods. The
+   gust veto is impossible on that endpoint.
+2. **Its wind direction is a cardinal string** (`"S"`). Fetch ray-casting needs an
+   angle. The raw gridpoint gives numeric degrees directly.
+3. **Its wind speed is a formatted string** (`"7 mph"`, sometimes `"5 to 10 mph"`).
+   The raw gridpoint gives numbers.
+
+The raw gridpoint carries every field the app needs, so using it removes a second
+request, removes all string parsing, and removes the entire class of range-string
+ambiguity that an earlier draft of this spec devoted a rule to. It also has a longer
+horizon.
+
+### Observed shape
+
+| Property | Unit | Entries |
+| --- | --- | --- |
+| `temperature` | `wmoUnit:degC` | 159 |
+| `probabilityOfPrecipitation` | `wmoUnit:percent` | 52 |
+| `windSpeed` | `wmoUnit:km_h-1` | 67 |
+| `windGust` | `wmoUnit:km_h-1` | 102 |
+| `windDirection` | `wmoUnit:degree_(angle)` | 81 |
+
+Horizon is `validTimes: "2026-08-10T12:00:00+00:00/P7DT13H"`, about 181 hours.
+
+**Values are run-length encoded, not hourly.** Each entry is
+`{ validTime: "<ISO instant>/<ISO duration>", value: <number> }`, for example
+`"2026-08-10T15:00:00+00:00/PT5H"`. Observed durations in one sample ran PT1H through
+PT9H. The differing entry counts per property in the table above are a direct
+consequence: each property is encoded independently, so **the properties do not share
+a timeline** and cannot be zipped positionally.
+
+`lib/nws.ts` therefore expands every property into a dense hourly map keyed by UTC
+hour, then joins the properties on that key. The parser must handle general ISO 8601
+durations including a day component (`P1DT6H`), since longer runs appear further out
+in the horizon even though this sample topped out at PT9H.
+
+### Units
+
+The gridpoint returns SI. Conversion happens once, in `lib/nws.ts`, at the boundary:
+km/h to knots (divide by 1.852) and Celsius to Fahrenheit. Nothing downstream sees
+any other unit.
+
+`windDirection` arrives as degrees. The cardinal label shown in the UI is **derived by
+this app** from the angle, not supplied by NWS.
+
+### Request requirements
+
+NWS rejects requests lacking a `User-Agent` header carrying contact information.
+Confirmed: requests sent with `dunmore-sailing-app (jaredvolpe@gmail.com)` succeed.
 
 ### Caching
 
@@ -321,7 +358,7 @@ has survived several successive forecasts is far more trustworthy than one that
 appeared in the last refresh, and the app says so.
 
 This matters because **the design otherwise treats hour 6 and hour 140 as equally
-real**, which they are not. A window six days out is a model artifact as often as it
+real**, which they are not. A window seven days out is a model artifact as often as it
 is a plan. Stability is the correction, and it is the honest one: rather than
 inventing a confidence percentage, it reports an observable fact about how the
 forecast has actually behaved.
@@ -345,7 +382,7 @@ One page, no navigation, no settings.
 
 **Headline.** One sentence in large type at the top, answering the question directly:
 *"Next window: Thursday 1pm, 4 hours, 12 to 15 kt N."* Or, equally prominently,
-*"Nothing sailable in the next six days."* Everything below it is supporting evidence.
+*"Nothing sailable in the next week."* Everything below it is supporting evidence.
 
 The question this app exists to answer is one line long, and a page that opens with
 three components instead of one answer has made the reader do the summarising. The
@@ -442,7 +479,12 @@ Required boundary cases:
 - A window running into sunset, truncated at the sunset hour.
 - An hour with `gustKt: null` passes on its other three gates, is not treated as a
   gust of zero, and is flagged in the window it belongs to.
-- A `"5 to 10 mph"` range string parsed at both bounds.
+- Run-length expansion: a `PT5H` entry becomes five identical hourly values, and a
+  `P1DT6H` entry becomes thirty.
+- Two properties with different entry counts and different interval boundaries join
+  correctly on the hour, since NWS encodes each property on its own timeline.
+- An hour covered by `windSpeed` but not by `windGust` yields `gustKt: null` rather
+  than dropping the hour or borrowing a neighbouring gust value.
 - A DST transition day, verifying no duplicated or missing hour.
 - Dates on either side of May 1 and November 1.
 - Wind direction to SVG rotation: all eight cardinals map to the correct on-screen
@@ -523,6 +565,7 @@ secret, and a spam-avoidance policy that deserve their own design pass.
 
 ## Open items
 
-None. Season boundaries, snapshot timing, and calibration scope were all resolved
-during design. The five NWS integration unknowns above are implementation
-verification steps, not unresolved design decisions.
+None. Season boundaries, snapshot timing, and calibration scope were resolved during
+design. The NWS integration unknowns were resolved on 2026-08-10 by calling the live
+API; the endpoint choice, units, encoding, and coordinates in this spec are observed
+rather than assumed.
