@@ -1,0 +1,28 @@
+{
+  "name": "dunmore",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.4",
+    "next": "16.3.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "suncalc": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/suncalc": "^1.9.2",
+    "@vitejs/plugin-react": "^6.0.5",
+    "typescript": "^5",
+    "vitest": "^4.1.10"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules
+.next
+.superpowers/
+*.db
+*.db-*
+.env
+next-env.d.ts
