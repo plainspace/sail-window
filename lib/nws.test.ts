@@ -82,10 +82,39 @@ describe('parseGridpoint', () => {
     }
   })
 
-  it('represents a missing gust as null, never as zero', () => {
+  it('represents a missing gust as null, never coerced to a number', () => {
     for (const h of hours) {
-      expect(h.gustKt === null || h.gustKt > 0).toBe(true)
+      expect(h.gustKt === null || typeof h.gustKt === 'number').toBe(true)
     }
+  })
+
+  it('preserves a genuine zero gust as 0, distinct from missing', () => {
+    // NWS reports a real 0 km/h gust for 2026-08-12T02:00Z through PT4H.
+    const zeroHour = hours.find((h) => h.startTime === '2026-08-12T02:00:00.000Z')
+    expect(zeroHour).toBeDefined()
+    expect(zeroHour!.gustKt).toBe(0)
+  })
+
+  it('yields a null gust for an hour that windGust does not cover', () => {
+    // Real NWS data for this gridpoint covers gusts for all 181 hours, so the
+    // null branch is unreachable from the fixture and needs a constructed input.
+    const synthetic = {
+      properties: {
+        windSpeed: { values: [{ validTime: '2026-08-15T12:00:00+00:00/PT2H', value: 18.52 }] },
+        windGust: { values: [{ validTime: '2026-08-15T12:00:00+00:00/PT1H', value: 27.78 }] },
+        windDirection: { values: [{ validTime: '2026-08-15T12:00:00+00:00/PT2H', value: 180 }] },
+        probabilityOfPrecipitation: { values: [{ validTime: '2026-08-15T12:00:00+00:00/PT2H', value: 5 }] },
+        temperature: { values: [{ validTime: '2026-08-15T12:00:00+00:00/PT2H', value: 22 }] },
+      },
+    }
+    const rows = parseGridpoint(synthetic)
+    expect(rows).toHaveLength(2)
+    expect(rows[0].gustKt).toBeCloseTo(15, 0)
+    expect(rows[1].gustKt).toBeNull()
+  })
+
+  it('finds complete gust coverage in the real fixture', () => {
+    expect(hours.every((h) => h.gustKt !== null)).toBe(true)
   })
 
   it('joins properties on the hour rather than by position', () => {

@@ -233,13 +233,22 @@ so the UI can explain precisely why an hour was rejected.
 `gustKt` is nullable by design, and a missing gust value must stay distinguishable
 from a gust of zero. See the gust risk below.
 
-**A null gust does not veto the hour.** NWS routinely omits gust data when gusts are
-unremarkable, so treating null as a failure would delete most otherwise-good hours.
-Null is treated as "no gust reported" and the hour is judged on its other three
-gates. The window list marks any window containing a null-gust hour so the missing
-data is visible rather than silently assumed benign. This is the one place the rules
-are permissive rather than conservative, and it is a deliberate trade: the
-alternative makes the app useless.
+**A null gust does not veto the hour.** Null is treated as "no gust reported" and the
+hour is judged on its other three gates. The window list marks any window containing
+a null-gust hour so the missing data is visible rather than silently assumed benign.
+
+**Correction, 2026-08-10.** An earlier draft justified this rule by asserting that
+"NWS routinely omits gust data when gusts are unremarkable." That is false, and it
+was never checked. Measured against the real fixture: `windSpeed` expands to 181
+hours, `windGust` expands to 181 hours, and the set difference in both directions is
+zero. Gust coverage is complete for every forecast hour.
+
+The rule stands anyway, as defensive handling of a field the API is not contractually
+obliged to provide, but its real justification is much weaker than claimed: the null
+case has simply never been observed. Because real data cannot reach that branch, it
+is covered by a synthetic input in the test suite rather than by the fixture, and the
+suite separately pins the observed fact that the fixture has full coverage. If that
+pin ever fails, NWS behaviour has changed and this rule needs revisiting.
 
 ## NWS integration
 
