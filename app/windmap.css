@@ -1,0 +1,5 @@
+.map { margin: 1.5rem 0; }
+.map svg { max-width: 100%; height: auto; }
+.water { fill: color-mix(in srgb, #4a90d9 22%, transparent); stroke: #4a90d9; stroke-width: 1.2; }
+.arrows line, .arrows path { stroke: #4a90d9; fill: #4a90d9; stroke-width: 1.4; opacity: 0.85; }
+figcaption { font-size: 0.85rem; color: var(--quiet); margin-top: 0.5rem; }
