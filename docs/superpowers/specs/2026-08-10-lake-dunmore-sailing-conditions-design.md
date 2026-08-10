@@ -14,18 +14,24 @@ weather forecast and doing the filtering by hand, every time. The forecast answe
 sail," which is a different question with a yes/no answer.
 
 This app answers that question directly: given the NWS forecast, it returns the
-specific multi-hour windows that meet the sailing criteria, and nothing else.
+specific multi-hour windows that meet the sailing criteria. Everything else it shows
+exists to qualify that answer, not to expand it: how far the wind blows over water,
+how stable the forecast has been, and what nearly qualified but did not.
 
 ## Scope
 
 **In scope (v1):**
 
 - Fetch the NWS hourly forecast for Lake Dunmore.
-- Apply four hard gates to every forecast hour.
+- Apply four hard gates to every forecast hour, within the sailing season.
 - Collapse passing hours into windows of three hours or more.
+- Answer the question in one sentence at the top of the page.
 - Display qualifying windows plus an hour-by-hour grid for the full forecast horizon.
-- Render a static wind map of the lake, scrubbable by hour.
+- Compute over-water fetch length for each window from the lake geometry.
+- Render a static wind map of the lake, scrubbable by hour, showing the fetch line.
+- Show near misses: days that failed exactly one gate, and by how much.
 - Persist every forecast fetch as an append-only snapshot.
+- Show how long each window has persisted across successive forecasts.
 
 **Out of scope (deferred to phase 2):**
 
@@ -36,6 +42,9 @@ specific multi-hour windows that meet the sailing criteria, and nothing else.
   a consent screen, and refresh-token maintenance for a single-user app.
 - Calibration log UI. See "Phase 2" below. The v1 snapshot store exists to make it
   possible later.
+- Push notifications. Deferred as a new delivery surface rather than because the idea
+  is weak. See "Phase 2" for the argument that it may be the highest-value addition
+  to the whole project.
 
 **Explicitly not building:** a settings screen, user accounts, multi-location
 support, or a second weather source.
@@ -68,6 +77,55 @@ Direction is displayed rather than dropped because it is the most likely candida
 for a future rule, and phase 2's calibration log is the mechanism for finding out
 empirically whether it deserves to be one.
 
+### Near misses
+
+Binary gates discard the most useful thing the forecast knows: **how close a failure
+was**. An hour at 6.8 kt fails identically to an hour at 2 kt. A day that failed only
+on 22% precipitation is a completely different day from one that failed on dead air,
+and the current rules render them the same way: absent.
+
+The app therefore surfaces a **near miss** for any run of three or more contiguous
+daylight hours that failed **exactly one** gate, showing which gate and by how much.
+
+This is not scoring reintroduced through the back door. There are no weights, no
+tunable importance, and no combined number. A near miss never appears in the window
+list and is never presented as sailable. It is presented as information about why a
+day was rejected, in a separate section, visually subordinate.
+
+It exists because the gates are strict in combination, and a page that is empty for a
+week is indistinguishable from a page that is broken. The near-miss list is what
+makes an empty result legible rather than alarming.
+
+`Verdict` already collects every failing reason rather than short-circuiting, so the
+data required is a by-product of work the rules engine is doing anyway.
+
+## Fetch length
+
+For each hour, the app computes the **over-water fetch**: the distance the wind
+travels across open water before it reaches the downwind shore. This is derived by
+casting a ray through the lake polygon along the wind vector and measuring the chord
+of water it crosses.
+
+Fetch depends on where on the lake you are, and the app does not know that. It
+therefore reports the chord through the widest part of the lake along that direction,
+which is the maximum available fetch for that wind. This is stated rather than
+smoothed over: it is an upper bound, not a reading at a point.
+
+Lake Dunmore runs roughly north-south, about three miles on its long axis and a few
+hundred yards across. A northerly or southerly therefore delivers well over a mile of
+fetch; an easterly or westerly delivers a few hundred yards. Fetch is the single
+largest driver of wave development and wind steadiness, so this one derived number
+explains more about what the day will feel like on the water than direction alone.
+
+**Why this is legitimate and uniform wind arrows are not.** Fetch is *geometry*,
+computed from a lake outline we possess and a direction the forecast gives us. It
+invents nothing. Drawing a spatially varying wind field, by contrast, would require
+meteorological resolution the source does not have. The distinction matters, and it
+is the reason the map draws one fetch line and many identical arrows rather than the
+reverse.
+
+Fetch is displayed, never gated. It does not filter any hour.
+
 ## Season
 
 The app operates from **May 1 through November 1, both dates inclusive**. November 2
@@ -86,8 +144,8 @@ they carry across years without edit.
 
 ## Architecture
 
-Next.js (App Router) deployed to Vercel, public from day one. Five library modules,
-three of which are pure functions with no I/O, plus one presentational component.
+Next.js (App Router) deployed to Vercel, public from day one. Six library modules,
+four of which are pure functions with no I/O, plus one presentational component.
 
 | Module | Responsibility | I/O |
 | --- | --- | --- |
@@ -95,8 +153,9 @@ three of which are pure functions with no I/O, plus one presentational component
 | `lib/daylight.ts` | Sunrise and sunset for a lat/lon/date, via `suncalc` | none |
 | `lib/rules.ts` | `HourlyConditions -> Verdict`. Applies the four gates plus season | none |
 | `lib/windows.ts` | Collapse passing hours into `SailWindow[]`, apply the 3-hour minimum | none |
-| `lib/snapshots.ts` | Append-only persistence of each raw fetch | database |
-| `components/WindMap.tsx` | Render the lake outline and wind arrows for one hour | none |
+| `lib/geometry.ts` | Ray-cast a wind direction across the lake polygon to get fetch length | none |
+| `lib/snapshots.ts` | Append-only persistence of each raw fetch, and stability diffing | database |
+| `components/WindMap.tsx` | Render the lake outline, wind arrows, and fetch line for one hour | none |
 
 `app/page.tsx` is a server component that composes these and renders. `WindMap` is a
 client component, since hour scrubbing is cursor-driven.
@@ -105,9 +164,10 @@ client component, since hour scrubbing is cursor-driven.
 operates on the normalized `HourlyConditions` shape. Swapping or adding a forecast
 source is a change to one file.
 
-**The rules engine performs no I/O.** `rules.ts` and `windows.ts` are pure functions
-over plain data, which makes the entire decision logic testable against saved
-fixtures with no network and no database.
+**The rules engine performs no I/O.** `rules.ts`, `windows.ts`, `geometry.ts`, and
+`daylight.ts` are pure functions over plain data, which makes the entire decision
+logic, including fetch computation, testable against saved fixtures with no network
+and no database. Only `nws.ts` and `snapshots.ts` touch the outside world.
 
 ## Data model
 
@@ -138,11 +198,30 @@ type SailWindow = {
   windKtMax: number
   directions: string[]     // distinct directions across the window
   temperatureFAvg: number
+  fetchMetersMin: number   // shortest over-water fetch across the window's directions
+  fetchMetersMax: number
+  hasUnknownGust: boolean  // true if any hour had gustKt === null
+  stability: Stability | null  // null until at least two snapshots exist
+}
+
+type Stability = {
+  firstSeenAt: string      // when this window first appeared in any forecast
+  forecastsSeen: number    // how many consecutive forecasts have contained it
+}
+
+type NearMiss = {
+  start: string
+  end: string
+  hours: number            // contiguous hours that failed on this one gate alone
+  reason: FailReason       // the single gate that failed
+  margin: string           // human-readable, e.g. "0.2 kt short", "precip 22%"
 }
 
 type ForecastSnapshot = {
   fetchedAt: string
   payload: unknown         // raw NWS response, unmodified
+  windowCount: number      // qualifying windows this forecast produced
+  qualifyingHours: number  // qualifying hours this forecast produced
 }
 ```
 
@@ -235,44 +314,86 @@ A single daily Vercel cron acts as a floor, guaranteeing at least one snapshot p
 day during stretches when the page goes unvisited. One cron per day is what the
 Vercel hobby tier allows, so this floor is free.
 
+### Forecast stability
+
+Each window is diffed against the windows derived from prior snapshots. A window that
+has survived several successive forecasts is far more trustworthy than one that
+appeared in the last refresh, and the app says so.
+
+This matters because **the design otherwise treats hour 6 and hour 140 as equally
+real**, which they are not. A window six days out is a model artifact as often as it
+is a plan. Stability is the correction, and it is the honest one: rather than
+inventing a confidence percentage, it reports an observable fact about how the
+forecast has actually behaved.
+
+A window is matched across snapshots by overlapping time range on the same date, not
+by exact equality, so a window that shifts by an hour or grows by one is recognised as
+the same window rather than a new one.
+
+Display is a badge on each window: "in every forecast for 3 days" versus "new in this
+forecast." Windows with no prior snapshots to compare against carry no badge at all
+rather than a misleading one, which is why `Stability` is nullable.
+
+**This is also what makes v1 persistence pay for itself immediately.** Storage
+justified solely by an unbuilt phase 2 feature is a smell; stability makes the
+snapshot store useful on day two, and the calibration log then inherits a store that
+already exists and is already full.
+
 ## UI
 
 One page, no navigation, no settings.
 
+**Headline.** One sentence in large type at the top, answering the question directly:
+*"Next window: Thursday 1pm, 4 hours, 12 to 15 kt N."* Or, equally prominently,
+*"Nothing sailable in the next six days."* Everything below it is supporting evidence.
+
+The question this app exists to answer is one line long, and a page that opens with
+three components instead of one answer has made the reader do the summarising. The
+zero case gets the same treatment as the positive case, deliberately: a confident
+"no" is a useful answer and must not look like a page that failed to load.
+
 **Window list.** The qualifying windows for the forecast horizon, each showing day,
-time range, duration, wind range in knots, direction, and average temperature.
+time range, duration, wind range in knots, direction, average temperature, fetch, and
+a stability badge.
 
 Windows are ordered **chronologically, soonest first**. They are deliberately not
 ranked by quality, because the rules engine produces no quality score. Every window
 in the list has already passed every gate, so they are equally valid and the only
 meaningful ordering is when they occur.
 
-**Wind map.** A static drawing of Lake Dunmore with wind arrows across it, plus a
-compass rose and the knot reading for the hour being shown. Hovering an hour in the
-grid redraws the map for that hour, so the wind can be watched swinging across a day.
-Defaults to the currently-selected window when the cursor is elsewhere.
+**Wind map.** A static drawing of Lake Dunmore with wind arrows across it, the fetch
+line drawn across the water with its length labeled, a compass rose, and the knot
+reading for the hour being shown. Hovering an hour in the grid redraws the map for
+that hour, so the wind can be watched swinging across a day, with the fetch line
+swinging and changing length as it does. Defaults to the currently-selected window
+when the cursor is elsewhere.
 
 **Hour grid.** Below the windows, a compact grid covering the full horizon, one cell
 per hour, colored by pass or fail. Hovering a failed cell shows its `FailReason`
 list, so it is always visible why a promising-looking hour was rejected.
+
+**Near misses.** Below the grid, visually subordinate to the window list: runs of
+three or more hours that failed exactly one gate, with the gate named and the margin
+shown. Never styled as an opportunity, never mixed into the window list.
 
 Thresholds are a config constant, not a UI control. Retuning is a code edit.
 
 ### Wind map implementation
 
 Inline SVG. No map library, no tile server, no API key, no runtime network request.
-The lake outline is traced once from OpenStreetMap, committed to the repo as
-`data/lake-dunmore.geojson`, and projected to SVG path coordinates at build time.
 Non-scrollable and non-zoomable by construction, since it is a drawing rather than a
 map viewport.
 
+The outline is sourced once, by hand, from the OpenStreetMap water relation for Lake
+Dunmore via Overpass, simplified, and committed as `data/lake-dunmore.geojson`. It is
+projected to SVG path coordinates at build time, and is never fetched at runtime.
+OpenStreetMap data is ODbL licensed, so attribution belongs in the page footer.
+
+The same polygon is the input to `lib/geometry.ts`, so the shape drawn on screen and
+the shape fetch is computed from are guaranteed to be the same shape.
+
 Arrows are laid out on a fixed grid clipped to the lake polygon, all rotated to the
 forecast direction, with arrow length scaled to wind speed in knots.
-
-The outline is sourced once, by hand, from the OpenStreetMap water relation for Lake
-Dunmore via Overpass, simplified, and committed. It is a static asset and is never
-fetched at runtime. OpenStreetMap data is ODbL licensed, so attribution belongs in
-the page footer.
 
 **The arrows are uniform across the lake, and this is deliberate.** NWS provides a
 single reading from one grid cell roughly 2.5 km across, which is larger than the
@@ -280,12 +401,17 @@ lake. There is no spatial variation in the underlying data, so none is drawn.
 Rendering divergent arrows, or interpolating a field from a single sample, would
 fabricate resolution the source does not have.
 
-What the map legitimately shows is **wind direction relative to the lake's axis**.
-Dunmore runs roughly north-south, so a northerly or southerly reads immediately as
-full-fetch and an easterly or westerly reads as coming over the ridge. That
-orientation judgment is the entire purpose of the drawing, and it is also the visual
-counterpart to the direction question that phase 2's calibration log is meant to
-answer with data.
+What the map legitimately shows is **wind direction relative to the lake's axis, and
+the fetch that follows from it**. Dunmore runs roughly north-south, so a northerly or
+southerly reads immediately as full-fetch and an easterly or westerly reads as coming
+over the ridge. The fetch line makes that judgment quantitative rather than
+impressionistic: it is drawn across the water along the wind vector and labeled with
+its length.
+
+So the map carries exactly one piece of real spatial information, and it is the piece
+we can actually derive. The arrows orient you; the fetch line is the data. This is
+also the visual counterpart to the direction question that phase 2's calibration log
+is meant to answer with recorded observations.
 
 ## Configuration
 
@@ -323,11 +449,44 @@ Required boundary cases:
   angle, with north up. This is the one place an off-by-180 error is both easy to
   make and invisible on inspection, since a wrong arrow still looks like an arrow.
 - Arrow rendering for an hour with a null or zero wind reading.
+- **Zero-window state.** A forecast in which nothing qualifies produces the confident
+  "nothing sailable" headline, an empty window list, and a populated near-miss
+  section. This state is expected to be common and must be tested as a first-class
+  result, not treated as an error path.
+- Near miss fires only when exactly one gate failed, and never when two or more did.
+- A near-miss run shorter than three hours is not reported.
+- Fetch geometry: a northerly on a north-south lake returns a long chord, an easterly
+  returns a short one, and a ray cast from outside the polygon does not crash.
+- Fetch across a concave section of the outline returns the water distance, not the
+  straight-line distance through land.
+- Stability matching: a window that shifts by one hour between snapshots is matched as
+  the same window, not counted as new.
+- Stability is null, and no badge renders, when only one snapshot exists.
+
+## Observability
+
+From the first deploy, each snapshot records **the number of qualifying windows and
+qualifying hours** it produced.
+
+This exists to settle a specific open question rather than to fill a dashboard. The
+four gates are individually reasonable and may be strict in combination: a Vermont
+summer afternoon routinely carries a precipitation probability above 20%, and
+requiring that alongside sustained 7 to 20 kt, gusts under 30, and three consecutive
+daylight hours may qualify far fewer hours than expected.
+
+The prediction on record is that **a meaningful share of days will produce zero
+windows**. Logging the count from day one makes that checkable against real data
+within a week. If it holds, the precipitation gate is the first thing to loosen,
+because it is the gate most likely to be binding and the one whose threshold is least
+grounded in sailing and most grounded in convention.
+
+Without this counter the question stays a matter of opinion for an entire season.
 
 ## Phase 2: calibration log
 
-Recorded here so v1 does not foreclose it, and because the v1 snapshot store exists
-solely to serve it.
+Recorded here so v1 does not foreclose it. The v1 snapshot store already earns its
+place through forecast stability; the calibration log is the second thing it enables,
+and it inherits a store that is already running and already full.
 
 After sailing, observed conditions at the lake are recorded and stored against the
 forecast snapshot for that hour. Accumulated over a season, this yields:
@@ -340,6 +499,27 @@ forecast snapshot for that hour. Accumulated over a season, this yields:
   is the only real measure of whether this app works.
 
 Phase 2 adds a write path and a form. It does not change the v1 rules engine.
+
+### Phase 2: push notifications
+
+Recorded because deferring it was a scheduling decision, not a judgment that it is
+unimportant.
+
+Sailing is intermittent, and an app for an intermittent activity that must be
+remembered and opened tends to be opened twice and then bookmarked forever. The
+forecast improving on a Thursday is precisely the moment nobody is sitting at a
+browser. A pull-only interface therefore has a structural problem that no amount of
+UI quality fixes.
+
+The remedy is small: one cron, one webhook to ntfy or Pushover, one message of the
+form "Thu 1 to 5pm, 4 hrs, 12 to 15 kt N, fetch 1.4 mi." The `Stability` data already
+provides the signal for when a window is worth interrupting someone over, so the
+notification can wait until a window has survived two forecasts rather than firing on
+every model wobble.
+
+This is plausibly the highest-value single addition to the project, and it is
+deliberately not in v1 only because it introduces a delivery surface, a subscription
+secret, and a spam-avoidance policy that deserve their own design pass.
 
 ## Open items
 
