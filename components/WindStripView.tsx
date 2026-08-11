@@ -14,6 +14,9 @@ export type Col = {
   pass: boolean
   dark: boolean
   speed: string
+  sky: 'clear' | 'partly' | 'cloudy' | 'unknown'
+  precipPct: number
+  precipFail: boolean
   hr: string
   title: string
 }
@@ -158,7 +161,7 @@ export function WindStripView({ days }: { days: DayGroup[] }) {
                 <div className="day-cols">
                   {d.cols.map((c) => (
                     <div
-                      className={`col ${c.pass ? 'is-pass' : 'is-fail'}${c.dark ? ' is-dark' : ''}`}
+                      className={`col sky-${c.sky} ${c.pass ? 'is-pass' : 'is-fail'}${c.dark ? ' is-dark' : ''}`}
                       key={c.iso}
                       title={c.title}
                     >
@@ -171,6 +174,15 @@ export function WindStripView({ days }: { days: DayGroup[] }) {
                         )}
                         <span className={`bar ${c.speed}`} style={{ height: `${c.barPct}%` }} />
                         {c.pass && <span className="pip" aria-hidden="true" />}
+                      </div>
+                      {/* Precip lane: proportional fill, quiet below 10%, gate colour at 30%+ */}
+                      <div className="precip" aria-hidden="true">
+                        {c.precipPct >= 10 && (
+                          <span
+                            className={`precip-fill${c.precipFail ? ' is-gate' : ''}`}
+                            style={{ width: `${c.precipPct}%` }}
+                          />
+                        )}
                       </div>
                       <DirArrow fromDeg={c.fromDeg} />
                       <span className="hr">{c.hr}</span>

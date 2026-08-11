@@ -11,6 +11,7 @@ const base: HourlyConditions = {
   windDirection: 'S',
   precipProbability: 5,
   temperatureF: 75,
+  skyCoverPct: 40,
 }
 const at = (over: Partial<HourlyConditions>) => judge({ ...base, ...over })
 

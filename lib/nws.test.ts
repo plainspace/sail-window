@@ -123,4 +123,29 @@ describe('parseGridpoint', () => {
     const gusty = hours.filter((h) => h.gustKt !== null)
     expect(gusty.length).toBeGreaterThan(50)
   })
+
+  it('keeps sky cover as a percentage between 0 and 100 when present', () => {
+    const withSky = hours.filter((h) => h.skyCoverPct !== null)
+    expect(withSky.length).toBeGreaterThan(0)
+    for (const h of withSky) {
+      expect(h.skyCoverPct).toBeGreaterThanOrEqual(0)
+      expect(h.skyCoverPct).toBeLessThanOrEqual(100)
+    }
+  })
+
+  it('yields a null sky cover for input that omits skyCover entirely, without dropping the hour', () => {
+    const synthetic = {
+      properties: {
+        windSpeed: { values: [{ validTime: '2026-08-15T12:00:00+00:00/PT2H', value: 18.52 }] },
+        windGust: { values: [{ validTime: '2026-08-15T12:00:00+00:00/PT2H', value: 27.78 }] },
+        windDirection: { values: [{ validTime: '2026-08-15T12:00:00+00:00/PT2H', value: 180 }] },
+        probabilityOfPrecipitation: { values: [{ validTime: '2026-08-15T12:00:00+00:00/PT2H', value: 5 }] },
+        temperature: { values: [{ validTime: '2026-08-15T12:00:00+00:00/PT2H', value: 22 }] },
+      },
+    }
+    const rows = parseGridpoint(synthetic)
+    expect(rows).toHaveLength(2)
+    expect(rows[0].skyCoverPct).toBeNull()
+    expect(rows[1].skyCoverPct).toBeNull()
+  })
 })

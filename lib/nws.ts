@@ -8,6 +8,7 @@ export type HourlyConditions = {
   windDirection: string
   precipProbability: number
   temperatureF: number
+  skyCoverPct: number | null
 }
 
 type NwsValue = { validTime: string; value: number | null }
@@ -59,6 +60,7 @@ export function parseGridpoint(json: unknown): HourlyConditions[] {
   const dir = expand(p.windDirection)
   const pop = expand(p.probabilityOfPrecipitation)
   const temp = expand(p.temperature)
+  const sky = expand(p.skyCover)
 
   const rows: HourlyConditions[] = []
   for (const key of [...speed.keys()].sort()) {
@@ -67,6 +69,9 @@ export function parseGridpoint(json: unknown): HourlyConditions[] {
     const t = temp.get(key)
     if (d === undefined || pr === undefined || t === undefined) continue
     const g = gust.get(key)
+    // Sky cover is display-only context, never a gate, so a missing value is null
+    // rather than a reason to drop the hour.
+    const sc = sky.get(key)
     rows.push({
       startTime: key,
       windKt: kmhToKt(speed.get(key)!),
@@ -75,15 +80,19 @@ export function parseGridpoint(json: unknown): HourlyConditions[] {
       windDirection: degreesToCardinal(d),
       precipProbability: pr,
       temperatureF: cToF(t),
+      skyCoverPct: sc === undefined ? null : sc,
     })
   }
   return rows
 }
 
 export async function fetchForecast(): Promise<{ raw: unknown; hours: HourlyConditions[] }> {
+  // Cache the upstream response for 15 minutes: the page renders per request, but
+  // NWS updates this gridpoint only a few times a day and asks callers not to poll
+  // aggressively, so one call per 15 minutes is generous.
   const res = await fetch(CONFIG.nws.gridpointUrl, {
     headers: { 'User-Agent': CONFIG.nws.userAgent, Accept: 'application/geo+json' },
-    next: { revalidate: 1800 },
+    next: { revalidate: 900 },
   })
   if (!res.ok) throw new Error(`NWS returned ${res.status} ${res.statusText}`)
   const raw = await res.json()

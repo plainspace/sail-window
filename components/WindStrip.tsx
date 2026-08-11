@@ -31,6 +31,21 @@ function speedClass(windKt: number, pass: boolean): string {
   return 'sp-mid'
 }
 
+// Sky cover is display-only context. Buckets, not a gate.
+type Sky = 'clear' | 'partly' | 'cloudy' | 'unknown'
+function skyState(pct: number | null): Sky {
+  if (pct === null) return 'unknown'
+  if (pct < 25) return 'clear'
+  if (pct <= 70) return 'partly'
+  return 'cloudy'
+}
+const skyWord: Record<Sky, string> = {
+  clear: 'clear',
+  partly: 'partly cloudy',
+  cloudy: 'cloudy',
+  unknown: 'sky n/a',
+}
+
 // Server component: builds a fully serializable day-group structure and hands it
 // to the client view. No functions or JSX cross the boundary, only plain data.
 export function WindStrip({ hours }: { hours: HourlyConditions[] }) {
@@ -55,10 +70,15 @@ export function WindStrip({ hours }: { hours: HourlyConditions[] }) {
     const barPct = Math.min(h.windKt / SCALE_MAX, 1) * 100
     const showGust = h.gustKt !== null && h.gustKt > h.windKt
     const gustPct = showGust ? Math.min((h.gustKt as number) / SCALE_MAX, 1) * 100 : 0
+    const sky = skyState(h.skyCoverPct)
+    const precipPct = Math.round(h.precipProbability)
+    const precipFail = reasons.includes('precip') // failed the 30% gate
+    const skyTip =
+      h.skyCoverPct === null ? 'sky n/a' : `${skyWord[sky]} ${Math.round(h.skyCoverPct)}%`
     const title =
       `${hourLong(h.startTime)} · ${Math.round(h.windKt)} kt` +
       (showGust ? ` gust ${Math.round(h.gustKt as number)}` : '') +
-      ` · from ${h.windDirection} · ${Math.round(h.precipProbability)}% rain` +
+      ` · from ${h.windDirection} · ${precipPct}% rain · ${skyTip}` +
       (pass ? ' · sailable' : ` · ${reasons.map((r) => reasonLabel[r] ?? r).join(', ')}`)
 
     group.cols.push({
@@ -71,6 +91,9 @@ export function WindStrip({ hours }: { hours: HourlyConditions[] }) {
       pass,
       dark,
       speed: speedClass(h.windKt, pass),
+      sky,
+      precipPct,
+      precipFail,
       hr: hourShort(h.startTime),
       title,
     })

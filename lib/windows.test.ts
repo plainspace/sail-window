@@ -15,6 +15,7 @@ function run(n: number, over: Partial<HourlyConditions> = {}, offset = 0): Hourl
     windDirection: 'S',
     precipProbability: 5,
     temperatureF: 75,
+    skyCoverPct: 40,
     ...over,
   }))
 }

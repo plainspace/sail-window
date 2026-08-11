@@ -5,7 +5,9 @@ import { WindStrip } from '@/components/WindStrip'
 import { LakeSilhouette } from '@/components/LakeSilhouette'
 import './dunmore.css'
 
-export const revalidate = 1800
+// Render fresh HTML on every request so no visitor is ever served a stale forecast.
+// The upstream NWS call is still cached (see lib/nws.ts), so this does not hammer them.
+export const dynamic = 'force-dynamic'
 
 const fmt = (iso: string, opts: Intl.DateTimeFormatOptions) =>
   new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', ...opts }).format(new Date(iso))
@@ -64,7 +66,9 @@ export default async function Page() {
             Each bar is one hour of sustained wind on a fixed 0 to 25 knot scale. The
             shaded band is the 7 to 20 knot target. Green bars clear every gate and are
             sailable... everything else fell short somewhere. Arrows point the way the
-            wind is blowing. Scroll sideways for the whole week.
+            wind is blowing. The column tint is cloud cover and the thin bar under each
+            hour is the chance of rain, going solid once it crosses the 30% gate. Hover
+            an hour for the full detail. Scroll sideways for the whole week.
           </p>
           <WindStrip hours={hours} />
           <ul className="legend" aria-hidden="true">
@@ -73,6 +77,8 @@ export default async function Page() {
             <li><span className="swatch sw-light" /> too light</li>
             <li><span className="swatch sw-strong" /> too strong</li>
             <li><span className="swatch sw-gust" /> gust</li>
+            <li><span className="swatch sw-precip" /> rain, solid at 30%+</li>
+            <li><span className="swatch sw-sky" /> cloud cover</li>
           </ul>
         </section>
 
