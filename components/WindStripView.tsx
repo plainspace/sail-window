@@ -214,6 +214,7 @@ export function WindStripView({ days }: { days: DayGroup[] }) {
                       key={c.iso}
                       title={c.title}
                     >
+                      <SkyIcon state={c.sky} />
                       <div className="graph">
                         {c.showGust && c.gustPct > c.barPct && (
                           <span
@@ -234,7 +235,6 @@ export function WindStripView({ days }: { days: DayGroup[] }) {
                         )}
                       </div>
                       <DirArrow fromDeg={c.fromDeg} />
-                      <SkyIcon state={c.sky} />
                       <span className="hr">{c.hr}</span>
                     </div>
                   ))}
