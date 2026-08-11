@@ -45,25 +45,6 @@ are discarded, on the grounds that a shorter stretch does not justify getting th
 out. Windows are listed in chronological order, not ranked, because every one of them
 has already cleared every gate.
 
-### Marginal
-
-A hard floor loses genuinely sailable days by tenths of a knot. The tier exists because
-of a real case: one week Saturday peaked at 6.8 kt against a 7 kt floor ... a fourteen-hour
-bluebird day, no rain, gusting almost 14, rejected by two tenths. That was the wrong
-answer. (Dunmore's floor has since dropped to 5 kt, so that particular Saturday is now a
-window outright. The tier still catches the next one down.)
-
-So there is a third tier between windows and near misses. An hour is **marginal** when it
-clears every gate except sustained wind, holds at `marginalMinKt` (4 kt for Dunmore) or
-above, and gusts past `marginalGustKt` (10 kt). The gust threshold is the whole point: 4
-kt with no gusts is drifting, 4 kt gusting 14 is real sailing with lulls, and an average
-cannot tell them apart. A run of three or more marginal hours is reported with its **peak
-sustained wind** shown, because that is the number you actually judge the day by.
-
-Marginal is never called sailable. It is the app saying "close, and gusty enough to be
-real... your call, not mine." A run that qualifies as marginal is reported there and only
-there, never also as a near miss.
-
 ### Near misses
 
 Pass-or-fail rules throw away the most useful thing the forecast knows: how close a
@@ -122,7 +103,7 @@ Add an entry to `config/spots.ts`:
   lat: 43.90234,
   lon: -73.07574,
   tz: 'America/New_York',
-  wind: { minKt: 5, maxKt: 20, maxGustKt: 30, marginalMinKt: 4, marginalGustKt: 10 },
+  wind: { minKt: 5, maxKt: 20, maxGustKt: 30 },
   precip: { maxProbability: 30 },
   window: { minHours: 3 },
   season: { start: { month: 5, day: 1 }, end: { month: 11, day: 1 } },

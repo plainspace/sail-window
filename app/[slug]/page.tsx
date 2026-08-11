@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { fetchForecast } from '@/lib/openmeteo'
 import { fetchForecast as fetchNwsForecast, type HourlyConditions } from '@/lib/nws'
-import { buildWindows, buildNearMisses, buildMarginalWindows } from '@/lib/windows'
+import { buildWindows, buildNearMisses } from '@/lib/windows'
 import { inSeason } from '@/lib/rules'
 import { WindStrip } from '@/components/WindStrip'
 import { LakeSilhouette } from '@/components/LakeSilhouette'
@@ -45,7 +45,6 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
   const { hours } = await fetchForecast(spot)
   const windows = buildWindows(hours, spot)
-  const marginals = buildMarginalWindows(hours, spot)
   const misses = buildNearMisses(hours, spot)
   const next = windows[0]
   const openNow = inSeason(new Date().toISOString(), spot)
@@ -195,35 +194,6 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         </section>
 
         <section className="block">
-          <h2>Marginal</h2>
-          <p className="lede">
-            Close to the wind floor but gusting enough to move... your judgement rather
-            than the app's. A stretch of {spot.window.minHours} or more hours that clears
-            every gate except sustained wind, holds at {spot.wind.marginalMinKt} kt or
-            above, and gusts past {spot.wind.marginalGustKt} kt.
-          </p>
-          {marginals.length === 0 ? (
-            <p className="quiet">Nothing marginal this week.</p>
-          ) : (
-            <ul className="cards">
-              {marginals.map((m) => (
-                <li className="card" key={m.start}>
-                  <span className="tag">marginal</span>
-                  <span className="card-when">
-                    <strong>{day(m.start)}</strong> {time(m.start)} to {time(m.end)}
-                  </span>
-                  <span className="card-meta">
-                    {m.hours} hrs · {Math.round(m.windKtMin)} to {Math.round(m.windKtMax)} kt,
-                    peak {m.peakKt.toFixed(1)} · gust {Math.round(m.gustKtMin)} to{' '}
-                    {Math.round(m.gustKtMax)} · {m.directions.join('/')} · {m.temperatureFAvg}&deg;F
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="block">
           <h2>Near misses</h2>
           <p className="lede">
             Stretches of {spot.window.minHours} or more hours that failed exactly one gate.
@@ -315,20 +285,6 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
             encouraging on a chart and is useless in practice. Windows are listed soonest
             first, not ranked... they have all cleared every gate, so the only thing that
             separates them is when they happen.
-          </p>
-
-          <h3>Marginal, between a window and a near miss</h3>
-          <p>
-            A hard floor loses genuinely sailable days by tenths of a knot, so a third
-            tier sits between a window and a near miss. An hour is marginal when it clears
-            every gate except sustained wind, holds at {spot.wind.marginalMinKt} kt or
-            above, and gusts past {spot.wind.marginalGustKt} kt. The gust is the whole
-            point: {spot.wind.marginalMinKt} kt with no gusts is drifting,{' '}
-            {spot.wind.marginalMinKt} kt gusting {spot.wind.marginalGustKt + 4} is real
-            sailing with lulls, and an average cannot tell them apart. A run of{' '}
-            {spot.window.minHours} or more such hours is reported as marginal, with its
-            peak sustained wind shown, because that is the number you judge the day by. It
-            is not called sailable... the last call is yours, not the app's.
           </p>
 
           <h3>Near misses, and why they exist</h3>

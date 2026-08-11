@@ -1,5 +1,12 @@
 # Dunmore: Lake Dunmore Sailing Conditions
 
+> **Historical record.** This is the original design, written 2026-08-10 before anything
+> was built. The app has since diverged: the forecast comes from Open-Meteo rather than
+> the National Weather Service (NWS is kept only as a second opinion), the wind floor is
+> 5 kt not 7, the precipitation limit is 30% not 20%, over-water fetch was built and then
+> removed, and the forecast snapshots and stability badges described below were never
+> built. For what the app actually does, read the README.
+
 **Date:** 2026-08-10
 **Status:** Approved design, ready for implementation planning
 **Repo:** `~/Codes/dunmore`

@@ -22,7 +22,6 @@
   --scroll-thumb: rgba(18, 36, 43, 0.28);
   --scroll-thumb-hover: rgba(18, 36, 43, 0.46);
   --chip-good: rgba(47, 107, 79, 0.18);
-  --chip-marginal: rgba(47, 107, 79, 0.12);
   --chip-maybe: rgba(47, 107, 79, 0.07);
   --dot-muted: #8aa0a8;
   --sky-icon: #90a4ac;
@@ -58,7 +57,6 @@
     --scroll-thumb: rgba(228, 237, 240, 0.3);
     --scroll-thumb-hover: rgba(228, 237, 240, 0.5);
     --chip-good: rgba(108, 195, 148, 0.2);
-    --chip-marginal: rgba(108, 195, 148, 0.14);
     --chip-maybe: rgba(108, 195, 148, 0.08);
     --dot-muted: #7f979f;
     --sky-icon: #8199a2;
@@ -236,9 +234,6 @@ code {
 .day-chip.has-window {
   background: var(--chip-good);
   color: var(--pass);
-}
-.day-chip.has-marginal {
-  background: var(--chip-marginal);
 }
 .day-chip.has-hour {
   background: var(--chip-maybe);

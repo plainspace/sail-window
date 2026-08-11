@@ -15,8 +15,6 @@ describe('Dunmore spot', () => {
       minKt: 5,
       maxKt: 20,
       maxGustKt: 30,
-      marginalMinKt: 4,
-      marginalGustKt: 10,
     })
     expect(dunmore!.precip.maxProbability).toBe(30)
     expect(dunmore!.window.minHours).toBe(3)
