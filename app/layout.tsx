@@ -1,5 +1,5 @@
 import 'overlayscrollbars/styles/overlayscrollbars.css'
-import './dunmore.css'
+import './sail-window.css'
 
 export const metadata = {
   title: 'When can I sail?',

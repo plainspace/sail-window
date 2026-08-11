@@ -1,0 +1,10 @@
+# Vercel CLI uploads the working directory and does NOT honour .gitignore, so the
+# local .env would otherwise ship with the deploy and shadow the project's own
+# environment variables. Keep secrets and local-only files out of the bundle.
+.env
+.env.*
+!.env.example
+.local/
+docs/
+tests/
+.superpowers/

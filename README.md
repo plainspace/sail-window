@@ -7,7 +7,7 @@ question is "when this week can I actually go," which has a yes or no answer. Th
 reads the US National Weather Service forecast, applies a few plain rules, and gives
 you the answer.
 
-Live example: [Lake Dunmore, Vermont](https://dunmore-v1.vercel.app/dunmore)
+Live example: [Lake Dunmore, Vermont](https://sail-window.vercel.app/dunmore)
 
 ## Coverage is the United States only
 
