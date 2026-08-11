@@ -13,7 +13,16 @@ export type Spot = {
   lat: number
   lon: number
   tz: string // IANA, e.g. 'America/New_York'
-  wind: { minKt: number; maxKt: number; maxGustKt: number }
+  wind: {
+    minKt: number
+    maxKt: number
+    maxGustKt: number
+    // The marginal tier: a run below minKt is still worth a look if sustained wind
+    // holds at marginalMinKt or above AND gusts clear marginalGustKt. Both required
+    // for every spot, so the judgement is made explicitly rather than defaulted.
+    marginalMinKt: number
+    marginalGustKt: number
+  }
   precip: { maxProbability: number }
   window: { minHours: number }
   season: { start: { month: number; day: number }; end: { month: number; day: number } }
@@ -31,7 +40,7 @@ export const SPOTS: Spot[] = [
     lat: 43.90234,
     lon: -73.07574,
     tz: 'America/New_York',
-    wind: { minKt: 7, maxKt: 20, maxGustKt: 30 },
+    wind: { minKt: 7, maxKt: 20, maxGustKt: 30, marginalMinKt: 5, marginalGustKt: 10 },
     precip: { maxProbability: 30 },
     window: { minHours: 3 },
     season: { start: { month: 5, day: 1 }, end: { month: 11, day: 1 } },

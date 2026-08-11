@@ -21,7 +21,9 @@
   --day-tint: rgba(46, 110, 142, 0.045);
   --scroll-thumb: rgba(18, 36, 43, 0.28);
   --scroll-thumb-hover: rgba(18, 36, 43, 0.46);
-  --dot: #2f6b4f;
+  --chip-good: rgba(47, 107, 79, 0.18);
+  --chip-marginal: rgba(47, 107, 79, 0.12);
+  --chip-maybe: rgba(47, 107, 79, 0.07);
   --dot-muted: #8aa0a8;
   --sky-icon: #90a4ac;
   --sky-sun: #c8912f;
@@ -55,7 +57,9 @@
     --day-tint: rgba(111, 180, 212, 0.06);
     --scroll-thumb: rgba(228, 237, 240, 0.3);
     --scroll-thumb-hover: rgba(228, 237, 240, 0.5);
-    --dot: #6cc394;
+    --chip-good: rgba(108, 195, 148, 0.2);
+    --chip-marginal: rgba(108, 195, 148, 0.14);
+    --chip-maybe: rgba(108, 195, 148, 0.08);
     --dot-muted: #7f979f;
     --sky-icon: #8199a2;
     --sky-sun: #d6a54e;
@@ -224,40 +228,35 @@ code {
   transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
 }
 .day-chip-label { overflow: hidden; text-overflow: clip; text-align: center; }
-.day-chip:hover { border-color: var(--water); color: var(--water); }
+
+/* Two independent signals on two channels, so they never compete:
+   BACKGROUND says whether the day is sailable, BORDER and WEIGHT say which day
+   you are currently looking at. A dot tried to carry sailability and never sat
+   right in a pill's curved corner at 41px wide. */
+.day-chip.has-window {
+  background: var(--chip-good);
+  color: var(--pass);
+}
+.day-chip.has-marginal {
+  background: var(--chip-marginal);
+}
+.day-chip.has-hour {
+  background: var(--chip-maybe);
+}
+.day-chip.has-none {
+  background: var(--panel);
+}
+
+.day-chip:hover { border-color: var(--water); }
 .day-chip.is-active {
-  background: var(--water-soft);
   border-color: var(--water);
-  color: var(--water);
+  box-shadow: inset 0 0 0 1px var(--water);
   font-weight: 600;
 }
 .day-chip:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-
-/* Wind status dot: solid = a window that day, hollow ring = isolated good hours,
-   nothing rendered when the day has neither.
-   Absolutely positioned in the chip's top right corner, deliberately. Inline, it
-   consumed the dot's width plus two flex gaps plus a mirrored spacer ... about
-   19px of a 41px chip at 390px, which clipped every label. Out of flow, the label
-   gets the chip's full inner width at any size. */
-.day-dot {
-  position: absolute;
-  /* The chip is a pill, so its corner is cut away by the end cap's curve. Inset
-     measured against that curve rather than the bounding box: the 45 degree point
-     on the outline is 0.7px in, so 2px sits just inside the edge and hugs it.
-     Larger insets leave the dot floating in the middle of the curve. */
-  top: 1px;
-  right: 1px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  box-sizing: border-box;
-}
-.dot-window { background: var(--dot); }
-.dot-hour { background: transparent; border: 1.5px solid var(--dot-muted); }
-.dot-none { background: transparent; }
 
 /* ---- Wind strip ---- */
 .strip-scroll {

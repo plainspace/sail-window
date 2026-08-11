@@ -21,7 +21,7 @@ export type Col = {
   title: string
 }
 
-export type DotState = 'window' | 'hour' | 'none'
+export type DotState = 'window' | 'marginal' | 'hour' | 'none'
 export type DayGroup = {
   key: string
   chip: string
@@ -36,6 +36,7 @@ export type Scale = { max: number; min: number; hi: number }
 
 const dotAria: Record<DotState, string> = {
   window: 'sailable window',
+  marginal: 'marginal, close to the wind floor but gusting enough to sail',
   hour: 'isolated good hours but no window',
   none: 'nothing sailable',
 }
@@ -174,12 +175,11 @@ export function WindStripView({ days, scale }: { days: DayGroup[]; scale: Scale 
           <button
             key={d.key}
             type="button"
-            className={`day-chip${active === d.key ? ' is-active' : ''}`}
+            className={`day-chip has-${d.dot}${active === d.key ? ' is-active' : ''}`}
             aria-current={active === d.key ? 'true' : undefined}
             aria-label={`${d.full}, ${dotAria[d.dot]}`}
             onClick={() => scrollToDay(d.key)}
           >
-            <span className={`day-dot dot-${d.dot}`} aria-hidden="true" />
             <span className="day-chip-label">{d.chip}</span>
           </button>
         ))}

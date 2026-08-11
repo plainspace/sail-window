@@ -1,5 +1,5 @@
 import { judge } from '@/lib/rules'
-import { buildWindows } from '@/lib/windows'
+import { buildWindows, buildMarginalWindows } from '@/lib/windows'
 import type { HourlyConditions } from '@/lib/nws'
 import type { Spot } from '@/config/spots'
 import { WindStripView, type DayGroup, type Scale } from './WindStripView'
@@ -66,6 +66,9 @@ export function WindStrip({ hours, spot }: { hours: HourlyConditions[]; spot: Sp
   // the same local-date label used to group the strip, so matching stays in the
   // spot's timezone rather than UTC.
   const windowDays = new Set(buildWindows(hours, spot).map((w) => dayLabel(w.start)))
+  // Days whose best result is a marginal window (close to the floor but gusting enough
+  // to move). Ranks below a real window, above isolated passing hours.
+  const marginalDays = new Set(buildMarginalWindows(hours, spot).map((m) => dayLabel(m.start)))
   const days: DayGroup[] = []
 
   for (const h of hours) {
@@ -112,9 +115,11 @@ export function WindStrip({ hours, spot }: { hours: HourlyConditions[]; spot: Sp
     })
   }
 
-  // Dot state per day: a window beats isolated passing hours beats nothing.
+  // Dot state per day: a window beats a marginal window beats isolated passing hours
+  // beats nothing.
   for (const group of days) {
     if (windowDays.has(group.key)) group.dot = 'window'
+    else if (marginalDays.has(group.key)) group.dot = 'marginal'
     else if (group.cols.some((c) => c.pass)) group.dot = 'hour'
     else group.dot = 'none'
   }

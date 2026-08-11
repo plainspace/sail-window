@@ -11,7 +11,13 @@ describe('Dunmore spot', () => {
   })
 
   it('encodes the approved gate thresholds', () => {
-    expect(dunmore!.wind).toEqual({ minKt: 7, maxKt: 20, maxGustKt: 30 })
+    expect(dunmore!.wind).toEqual({
+      minKt: 7,
+      maxKt: 20,
+      maxGustKt: 30,
+      marginalMinKt: 5,
+      marginalGustKt: 10,
+    })
     expect(dunmore!.precip.maxProbability).toBe(30)
     expect(dunmore!.window.minHours).toBe(3)
   })
