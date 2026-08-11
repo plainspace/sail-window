@@ -46,7 +46,9 @@ const skyWord: Record<Sky, string> = {
 export function WindStrip({ hours, spot }: { hours: HourlyConditions[]; spot: Spot }) {
   const tz = spot.tz
   const dayLabel = (iso: string) => fmt(iso, tz, { weekday: 'short', month: 'short', day: 'numeric' })
-  const dayChip = (iso: string) => fmt(iso, tz, { weekday: 'short' })
+  // Two letters, not three. The chips are a fixed grid across the full width, so at
+  // 390px each one is about 41px and a three-letter label does not fit.
+  const dayChip = (iso: string) => fmt(iso, tz, { weekday: 'short' }).slice(0, 2)
   const dayFull = (iso: string) => fmt(iso, tz, { weekday: 'long' })
   const hourShort = (iso: string) => fmt(iso, tz, { hour: 'numeric' }).toLowerCase().replace(' ', '')
   const hourLong = (iso: string) => fmt(iso, tz, { weekday: 'long', hour: 'numeric' }).toLowerCase()

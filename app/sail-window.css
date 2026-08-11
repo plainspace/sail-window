@@ -193,10 +193,10 @@ code {
   margin: 0 0 0.7rem;
 }
 .day-chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.32rem;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -213,14 +213,6 @@ code {
   appearance: none;
   transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
 }
-/* The dot sits before the label, so mirror its footprint after. Without this,
-   justify-content centres the dot-plus-label group and the text itself lands
-   off centre. */
-.day-chip::after {
-  content: '';
-  flex: 0 0 auto;
-  width: 6px;
-}
 .day-chip-label { overflow: hidden; text-overflow: clip; text-align: center; }
 .day-chip:hover { border-color: var(--water); color: var(--water); }
 .day-chip.is-active {
@@ -235,9 +227,15 @@ code {
 }
 
 /* Wind status dot: solid = a window that day, hollow ring = isolated good hours,
-   invisible placeholder = nothing (kept so every label sits at the same offset). */
+   nothing rendered when the day has neither.
+   Absolutely positioned in the chip's top right corner, deliberately. Inline, it
+   consumed the dot's width plus two flex gaps plus a mirrored spacer ... about
+   19px of a 41px chip at 390px, which clipped every label. Out of flow, the label
+   gets the chip's full inner width at any size. */
 .day-dot {
-  flex: 0 0 auto;
+  position: absolute;
+  top: 3px;
+  right: 3px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
