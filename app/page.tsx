@@ -17,7 +17,9 @@ export default function Home() {
               This tells you when the conditions are right to sail at one specific place,
               read straight from the Open-Meteo forecast and four plain gates: daylight, a
               sustained wind band, a gust ceiling, and a rain limit. Not a weather report... a
-              yes or no.
+              yes or no. Days that clear every gate are windows. Days that fall just short of
+              the wind floor but gust enough to be real are called marginal, and left to your
+              judgement rather than the app's.
             </p>
           </div>
         </header>
@@ -61,7 +63,9 @@ export default function Home() {
             <li>
               Add an entry to <code>config/spots.ts</code> with a slug, a name, the{' '}
               <code>lat</code> and <code>lon</code> of the water, a timezone, and your own
-              wind band, gust ceiling, rain limit, and season.
+              wind band, gust ceiling, rain limit, season, and the two marginal thresholds
+              (<code>marginalMinKt</code> and <code>marginalGustKt</code>). Every field is
+              required, so each spot states its own idea of what counts as sailable.
             </li>
             <li>
               Open <code>/your-slug</code>. Open-Meteo needs no key and no setup, so the

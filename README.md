@@ -36,7 +36,7 @@ hold. There is no scoring and no partial credit.
 | Gate | Default | Why |
 | --- | --- | --- |
 | Daylight | sunrise to sunset | computed from the spot's own coordinates, so it tracks the season |
-| Sustained wind | 7 to 20 kt | below is drifting, above stops being relaxing |
+| Sustained wind | 5 to 20 kt | below is drifting, above stops being relaxing |
 | Gusts | 30 kt ceiling | a separate field from sustained wind, and the two diverge constantly in valley terrain |
 | Precipitation | under 30% chance | the forecast gives a probability, so a line has to be drawn somewhere |
 
@@ -47,14 +47,16 @@ has already cleared every gate.
 
 ### Marginal
 
-A hard floor loses genuinely sailable days by tenths of a knot. One week Saturday peaked
-at 6.8 kt against the 7 kt floor: a fourteen-hour bluebird day, no rain, gusting almost
-14, rejected by two tenths. That is the wrong answer.
+A hard floor loses genuinely sailable days by tenths of a knot. The tier exists because
+of a real case: one week Saturday peaked at 6.8 kt against a 7 kt floor ... a fourteen-hour
+bluebird day, no rain, gusting almost 14, rejected by two tenths. That was the wrong
+answer. (Dunmore's floor has since dropped to 5 kt, so that particular Saturday is now a
+window outright. The tier still catches the next one down.)
 
 So there is a third tier between windows and near misses. An hour is **marginal** when it
-clears every gate except sustained wind, holds at `marginalMinKt` (5 kt for Dunmore) or
-above, and gusts past `marginalGustKt` (10 kt). The gust threshold is the whole point: 6
-kt with no gusts is drifting, 6 kt gusting 14 is real sailing with lulls, and an average
+clears every gate except sustained wind, holds at `marginalMinKt` (4 kt for Dunmore) or
+above, and gusts past `marginalGustKt` (10 kt). The gust threshold is the whole point: 4
+kt with no gusts is drifting, 4 kt gusting 14 is real sailing with lulls, and an average
 cannot tell them apart. A run of three or more marginal hours is reported with its **peak
 sustained wind** shown, because that is the number you actually judge the day by.
 
@@ -65,7 +67,7 @@ there, never also as a near miss.
 ### Near misses
 
 Pass-or-fail rules throw away the most useful thing the forecast knows: how close a
-failure was. An hour at 6.8 kt fails identically to an hour at 2 kt.
+failure was. An hour a tenth under the floor fails identically to an hour at 2 kt.
 
 So any stretch of three or more hours that failed **exactly one** gate is reported
 separately, with the gate named and the margin shown. It is never presented as
@@ -120,7 +122,7 @@ Add an entry to `config/spots.ts`:
   lat: 43.90234,
   lon: -73.07574,
   tz: 'America/New_York',
-  wind: { minKt: 7, maxKt: 20, maxGustKt: 30, marginalMinKt: 5, marginalGustKt: 10 },
+  wind: { minKt: 5, maxKt: 20, maxGustKt: 30, marginalMinKt: 4, marginalGustKt: 10 },
   precip: { maxProbability: 30 },
   window: { minHours: 3 },
   season: { start: { month: 5, day: 1 }, end: { month: 11, day: 1 } },

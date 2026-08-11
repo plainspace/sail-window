@@ -20,12 +20,12 @@ const at = (over: Partial<HourlyConditions>) => judge({ ...base, ...over }, spot
 
 describe('wind gates', () => {
   it('accepts the inclusive bounds', () => {
-    expect(at({ windKt: 7 }).pass).toBe(true)
+    expect(at({ windKt: 5 }).pass).toBe(true)
     expect(at({ windKt: 20 }).pass).toBe(true)
   })
 
   it('rejects just outside the bounds with the right reason', () => {
-    expect(at({ windKt: 6.9 })).toEqual({ pass: false, reasons: ['wind-too-light'] })
+    expect(at({ windKt: 4.9 })).toEqual({ pass: false, reasons: ['wind-too-light'] })
     expect(at({ windKt: 20.1 })).toEqual({ pass: false, reasons: ['wind-too-strong'] })
   })
 })

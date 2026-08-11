@@ -158,7 +158,12 @@ export function buildNearMisses(hours: HourlyConditions[], spot: Spot): NearMiss
     if (isMarginalHour(h, spot)) return null
     const v = judge(h, spot)
     if (v.pass) return null
-    return v.reasons.length === 1 ? v.reasons[0] : null
+    if (v.reasons.length !== 1) return null
+    // Darkness and the season are facts about the calendar, not near misses. "You could
+    // have sailed Tuesday night if it were not night" is noise, and it shows up as soon
+    // as the wind floor is low enough for night hours to clear every other gate.
+    if (v.reasons[0] === 'dark' || v.reasons[0] === 'off-season') return null
+    return v.reasons[0]
   }
   return runs(hours, soleReason, spot.window.minHours).map((group) => {
     const reason = soleReason(group[0]) as FailReason

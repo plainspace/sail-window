@@ -85,19 +85,19 @@ describe('buildNearMisses', () => {
   })
 
   it('does not report a run that qualifies as marginal', () => {
-    // 6.8 kt gusting 13.8: fails only wind-too-light, clears the marginal thresholds.
-    const hours = run(5, { windKt: 6.8, gustKt: 13.8 })
+    // 4.5 kt gusting 13.8: fails only wind-too-light, clears the marginal thresholds.
+    const hours = run(5, { windKt: 4.5, gustKt: 13.8 })
     expect(buildMarginalWindows(hours, spot)).toHaveLength(1)
     expect(buildNearMisses(hours, spot)).toEqual([])
   })
 })
 
 describe('buildMarginalWindows', () => {
-  it('qualifies a run at 6.8 kt gusting 13.8', () => {
-    const m = buildMarginalWindows(run(5, { windKt: 6.8, gustKt: 13.8 }), spot)
+  it('qualifies a run at 4.5 kt gusting 13.8', () => {
+    const m = buildMarginalWindows(run(5, { windKt: 4.5, gustKt: 13.8 }), spot)
     expect(m).toHaveLength(1)
     expect(m[0].hours).toBe(5)
-    expect(m[0].peakKt).toBeCloseTo(6.8)
+    expect(m[0].peakKt).toBeCloseTo(4.5)
     expect(m[0].gustKtMax).toBeCloseTo(13.8)
   })
 
@@ -105,12 +105,12 @@ describe('buildMarginalWindows', () => {
     expect(buildMarginalWindows(run(5, { windKt: 6.8, gustKt: 4 }), spot)).toEqual([])
   })
 
-  it('does not qualify a run at 4.5 kt, below the marginal floor', () => {
-    expect(buildMarginalWindows(run(5, { windKt: 4.5, gustKt: 13.8 }), spot)).toEqual([])
+  it('does not qualify a run at 3.5 kt, below the marginal floor', () => {
+    expect(buildMarginalWindows(run(5, { windKt: 3.5, gustKt: 13.8 }), spot)).toEqual([])
   })
 
   it('does not qualify a two-hour run', () => {
-    expect(buildMarginalWindows(run(2, { windKt: 6.8, gustKt: 13.8 }), spot)).toEqual([])
+    expect(buildMarginalWindows(run(2, { windKt: 4.5, gustKt: 13.8 }), spot)).toEqual([])
   })
 
   it('does not qualify a run that also fails another gate', () => {

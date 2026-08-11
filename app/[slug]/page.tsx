@@ -319,14 +319,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
           <h3>Marginal, between a window and a near miss</h3>
           <p>
-            A hard floor loses genuinely sailable days by tenths of a knot. This week
-            Saturday peaks at 6.8 kt against the {spot.wind.minKt} kt floor... a long
-            bluebird day, no rain, gusting almost 14, rejected by two tenths. So a third
-            tier sits between the two. An hour is marginal when it clears every gate
-            except sustained wind, holds at {spot.wind.marginalMinKt} kt or above, and
-            gusts past {spot.wind.marginalGustKt} kt. The gust is the whole point: 6 kt
-            with no gusts is drifting, 6 kt gusting 14 is real sailing with lulls. A run
-            of {spot.window.minHours} or more such hours is reported as marginal, with its
+            A hard floor loses genuinely sailable days by tenths of a knot, so a third
+            tier sits between a window and a near miss. An hour is marginal when it clears
+            every gate except sustained wind, holds at {spot.wind.marginalMinKt} kt or
+            above, and gusts past {spot.wind.marginalGustKt} kt. The gust is the whole
+            point: {spot.wind.marginalMinKt} kt with no gusts is drifting,{' '}
+            {spot.wind.marginalMinKt} kt gusting {spot.wind.marginalGustKt + 4} is real
+            sailing with lulls, and an average cannot tell them apart. A run of{' '}
+            {spot.window.minHours} or more such hours is reported as marginal, with its
             peak sustained wind shown, because that is the number you judge the day by. It
             is not called sailable... the last call is yours, not the app's.
           </p>
