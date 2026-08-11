@@ -1,15 +1,6 @@
-import type { Metadata } from 'next'
+export const metadata = { title: 'Dunmore', description: 'When can I sail at Lake Dunmore' }
 
-export const metadata: Metadata = {
-  title: 'Dunmore',
-  description: 'Lake Dunmore sailing conditions',
-}
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>{children}</body>

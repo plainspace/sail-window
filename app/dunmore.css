@@ -1,0 +1,17 @@
+:root { color-scheme: light dark; --fg: #111; --quiet: #666; --pass: #2f7d32; --fail: #d8d8d8; }
+@media (prefers-color-scheme: dark) {
+  :root { --fg: #eee; --quiet: #999; --pass: #6fcf74; --fail: #333; }
+}
+body { background: canvas; color: var(--fg); font: 16px/1.5 ui-sans-serif, system-ui, sans-serif; }
+main { max-width: 46rem; margin: 0 auto; padding: 3rem 1.25rem; }
+.headline { font-size: clamp(1.5rem, 4vw, 2.25rem); line-height: 1.2; margin: 0 0 2.5rem; }
+h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--quiet); margin: 2.5rem 0 0.75rem; }
+ul { list-style: none; padding: 0; margin: 0; }
+li { padding: 0.4rem 0; border-bottom: 1px solid color-mix(in srgb, var(--quiet) 25%, transparent); }
+.quiet { color: var(--quiet); }
+.flag { color: #b8860b; font-size: 0.85em; }
+.grid { display: flex; flex-wrap: wrap; gap: 2px; }
+.cell { width: 10px; height: 18px; border-radius: 2px; background: var(--fail); }
+.cell.pass { background: var(--pass); }
+.misses li { opacity: 0.75; }
+.offseason { border-left: 3px solid #b8860b; padding: 0.5rem 0.9rem; margin: 0 0 1.5rem; color: var(--quiet); }
