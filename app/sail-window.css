@@ -234,8 +234,12 @@ code {
    gets the chip's full inner width at any size. */
 .day-dot {
   position: absolute;
-  top: 3px;
-  right: 3px;
+  /* The chip is a pill, so its corner is cut away by the end cap's curve. Inset
+     measured against that curve rather than the bounding box: the 45 degree point
+     on the outline is 0.7px in, so 2px sits just inside the edge and hugs it.
+     Larger insets leave the dot floating in the middle of the curve. */
+  top: 1px;
+  right: 1px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
