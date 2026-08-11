@@ -66,9 +66,10 @@ export default async function Page() {
             Each bar is one hour of sustained wind on a fixed 0 to 25 knot scale. The
             shaded band is the 7 to 20 knot target. Green bars clear every gate and are
             sailable... everything else fell short somewhere. Arrows point the way the
-            wind is blowing. The column tint is cloud cover and the thin bar under each
-            hour is the chance of rain, going solid once it crosses the 30% gate. Hover
-            an hour for the full detail. Scroll sideways for the whole week.
+            wind is blowing. A small sky icon under each hour reads cloud cover, from a
+            warm sun to a grey cloud, and the thin bar under each hour is the chance of
+            rain, going solid once it crosses the 30% gate. Hover an hour for the full
+            detail. Scroll sideways for the whole week.
           </p>
           <WindStrip hours={hours} />
           <ul className="legend" aria-hidden="true">
@@ -78,7 +79,18 @@ export default async function Page() {
             <li><span className="swatch sw-strong" /> too strong</li>
             <li><span className="swatch sw-gust" /> gust</li>
             <li><span className="swatch sw-precip" /> rain, solid at 30%+</li>
-            <li><span className="swatch sw-sky" /> cloud cover</li>
+            <li>
+              <svg className="sky-icon legend-sky" viewBox="0 0 16 16" aria-hidden="true">
+                <circle className="sun" cx="6.4" cy="6.1" r="3" />
+                <g fill="currentColor">
+                  <circle cx="5.4" cy="10.2" r="2.1" />
+                  <circle cx="8" cy="8.7" r="2.8" />
+                  <circle cx="10.7" cy="10.2" r="2.1" />
+                  <rect x="3.3" y="10" width="9.4" height="2.7" rx="1.35" />
+                </g>
+              </svg>
+              sky, sun to cloud
+            </li>
           </ul>
         </section>
 

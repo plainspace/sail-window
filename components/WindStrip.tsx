@@ -31,16 +31,19 @@ function speedClass(windKt: number, pass: boolean): string {
   return 'sp-mid'
 }
 
-// Sky cover is display-only context. Buckets, not a gate.
-type Sky = 'clear' | 'partly' | 'cloudy' | 'unknown'
+// Sky cover is display-only context. Buckets, not a gate. Four active states plus
+// unknown; thresholds fixed to the physical percentage, not tuned to one week.
+type Sky = 'clear' | 'mostly-clear' | 'partly' | 'cloudy' | 'unknown'
 function skyState(pct: number | null): Sky {
   if (pct === null) return 'unknown'
   if (pct < 25) return 'clear'
-  if (pct <= 70) return 'partly'
+  if (pct < 50) return 'mostly-clear'
+  if (pct < 75) return 'partly'
   return 'cloudy'
 }
 const skyWord: Record<Sky, string> = {
   clear: 'clear',
+  'mostly-clear': 'mostly clear',
   partly: 'partly cloudy',
   cloudy: 'cloudy',
   unknown: 'sky n/a',

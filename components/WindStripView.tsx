@@ -14,7 +14,7 @@ export type Col = {
   pass: boolean
   dark: boolean
   speed: string
-  sky: 'clear' | 'partly' | 'cloudy' | 'unknown'
+  sky: 'clear' | 'mostly-clear' | 'partly' | 'cloudy' | 'unknown'
   precipPct: number
   precipFail: boolean
   hr: string
@@ -41,6 +41,55 @@ const SCALE_MAX = 25
 // strip, just right of the pinned axis. Used for both scroll targeting and the
 // active-day IntersectionObserver.
 const EDGE = 44
+
+// Sky cover as a tiny two-tone glyph: warm sun disc, muted (currentColor) cloud.
+// As cover rises the sun shrinks and the cloud grows, so a run of fair weather
+// reads warm at a glance without resolving individual icons. aria-hidden ... the
+// state is already in the column title. Kept to very few strokes for ~13px.
+function Cloud() {
+  return (
+    <g fill="currentColor">
+      <circle cx="5.4" cy="10.2" r="2.1" />
+      <circle cx="8" cy="8.7" r="2.8" />
+      <circle cx="10.7" cy="10.2" r="2.1" />
+      <rect x="3.3" y="10" width="9.4" height="2.7" rx="1.35" />
+    </g>
+  )
+}
+
+function SkyIcon({ state }: { state: Col['sky'] }) {
+  return (
+    <svg className={`sky-icon sky-${state}`} viewBox="0 0 16 16" aria-hidden="true">
+      {state === 'clear' && <circle className="sun" cx="8" cy="8" r="4.3" />}
+      {state === 'mostly-clear' && (
+        <>
+          <circle className="sun" cx="7.2" cy="6.7" r="3.7" />
+          <g transform="translate(3.4 3.6) scale(0.6)">
+            <Cloud />
+          </g>
+        </>
+      )}
+      {state === 'partly' && (
+        <>
+          <circle className="sun" cx="5.6" cy="5.9" r="3.1" />
+          <Cloud />
+        </>
+      )}
+      {state === 'cloudy' && <Cloud />}
+      {state === 'unknown' && (
+        <circle
+          cx="8"
+          cy="8"
+          r="3.2"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.1"
+          strokeDasharray="2 1.8"
+        />
+      )}
+    </svg>
+  )
+}
 
 // NWS gives the direction wind blows FROM. An arrow depicting motion points to deg + 180.
 function DirArrow({ fromDeg }: { fromDeg: number }) {
@@ -161,7 +210,7 @@ export function WindStripView({ days }: { days: DayGroup[] }) {
                 <div className="day-cols">
                   {d.cols.map((c) => (
                     <div
-                      className={`col sky-${c.sky} ${c.pass ? 'is-pass' : 'is-fail'}${c.dark ? ' is-dark' : ''}`}
+                      className={`col ${c.pass ? 'is-pass' : 'is-fail'}${c.dark ? ' is-dark' : ''}`}
                       key={c.iso}
                       title={c.title}
                     >
@@ -185,6 +234,7 @@ export function WindStripView({ days }: { days: DayGroup[] }) {
                         )}
                       </div>
                       <DirArrow fromDeg={c.fromDeg} />
+                      <SkyIcon state={c.sky} />
                       <span className="hr">{c.hr}</span>
                     </div>
                   ))}
