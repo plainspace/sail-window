@@ -1,9 +1,10 @@
 // Every place this app can answer for. To add your own spot, copy the Dunmore
-// entry, change the slug, name, coordinates, and thresholds, and set NWS_CONTACT
-// in your environment. The outline is optional (see the `outline` field).
+// entry, change the slug, name, coordinates, and thresholds. The outline is optional
+// (see the `outline` field).
 //
-// Coverage is the United States only: forecasts come from the US National Weather
-// Service, which does not cover other countries.
+// Coverage is worldwide: the primary forecast comes from Open-Meteo, which covers
+// the whole planet. The US National Weather Service is kept as a second opinion for
+// US spots only (it needs NWS_CONTACT set; leave it unset to skip the comparison).
 
 export type Spot = {
   slug: string // url segment, e.g. 'dunmore'

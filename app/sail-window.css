@@ -117,6 +117,16 @@ main { padding: 0 1.5rem 6rem; }
   text-wrap: pretty;
 }
 
+/* A quiet, factual note when the two forecast sources disagree on today's peak wind.
+   Information, not an alarm... reuses the muted palette, no new colour. */
+.second-opinion {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0.9rem 0 0;
+  max-width: 34rem;
+  text-wrap: pretty;
+}
+
 /* ---- Lake silhouette ---- */
 .silhouette {
   flex: 0 0 auto;

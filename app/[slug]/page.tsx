@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
-import { fetchForecast } from '@/lib/nws'
+import { fetchForecast } from '@/lib/openmeteo'
+import { fetchForecast as fetchNwsForecast, type HourlyConditions } from '@/lib/nws'
 import { buildWindows, buildNearMisses } from '@/lib/windows'
 import { inSeason } from '@/lib/rules'
 import { WindStrip } from '@/components/WindStrip'
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!spot) return {}
   return {
     title: `When can I sail at ${spot.name}?`,
-    description: `A yes-or-no read on when conditions allow sailing at ${spot.name}, ${spot.region}, from the US National Weather Service forecast.`,
+    description: `A yes-or-no read on when conditions allow sailing at ${spot.name}, ${spot.region}, from the Open-Meteo forecast.`,
   }
 }
 
@@ -47,6 +48,38 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const misses = buildNearMisses(hours, spot)
   const next = windows[0]
   const openNow = inSeason(new Date().toISOString(), spot)
+
+  // Second opinion. NWS is US-only and human-adjusted, and Vermont forecasters tend
+  // to knock wind down for sheltered valleys, which is often wrong for the middle of
+  // a lake. So we fetch it too, compare each source's peak sustained wind for today,
+  // and name the disagreement only when it is large. It must never break the page:
+  // any failure (including non-US spots NWS cannot answer for) silently drops the line.
+  const localDate = (iso: string) => fmt(iso, { year: 'numeric', month: 'numeric', day: 'numeric' })
+  const todayKey = localDate(new Date().toISOString())
+  const peakToday = (hs: HourlyConditions[]): number | null => {
+    const todays = hs.filter((h) => localDate(h.startTime) === todayKey)
+    return todays.length ? Math.max(...todays.map((h) => h.windKt)) : null
+  }
+  let secondOpinion: string | null = null
+  try {
+    const { hours: nwsHours } = await fetchNwsForecast(spot)
+    const omPeak = peakToday(hours)
+    const nwsPeak = peakToday(nwsHours)
+    if (omPeak !== null && nwsPeak !== null && Math.max(omPeak, nwsPeak) > 0) {
+      const divergence = Math.abs(omPeak - nwsPeak) / Math.max(omPeak, nwsPeak)
+      if (divergence >= 0.25) {
+        const om = Math.round(omPeak)
+        const nws = Math.round(nwsPeak)
+        secondOpinion =
+          nwsPeak < omPeak
+            ? `NWS is lower today: peak ${nws} kt against Open-Meteo's ${om} kt.`
+            : `NWS is higher today: peak ${nws} kt against Open-Meteo's ${om} kt.`
+      }
+    }
+  } catch {
+    // The second opinion is never allowed to take the page down with it.
+    secondOpinion = null
+  }
 
   // One arrow for the silhouette: the next window's opening hour if there is a
   // window, otherwise the first forecast hour we have.
@@ -78,8 +111,9 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
             <h1 className="headline">{headline}</h1>
             <p className="standfirst">
               A yes-or-no read on when the conditions actually allow sailing this week,
-              built from the National Weather Service forecast and four plain gates.
+              built from the Open-Meteo forecast and four plain gates.
             </p>
+            {secondOpinion && <p className="second-opinion">{secondOpinion}</p>}
           </div>
           {arrowHour && (
             <LakeSilhouette
@@ -267,9 +301,10 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
           <ul className="limits">
             <li>
               <strong>It does not pretend to know the wind on the water.</strong> The
-              forecast grid is about 1.5 miles square, and terrain finer than that is
-              smoothed away. No public forecast resolves a single lake or bay at that scale,
-              and claiming otherwise would be the easiest lie in the whole system.
+              underlying model grid is several miles across, coarser on longer forecasts,
+              and terrain finer than that is smoothed away. No public forecast resolves a
+              single lake or bay at that scale, and claiming otherwise would be the easiest
+              lie in the whole system.
             </li>
             <li>
               <strong>It ignores cloud cover.</strong> Overcast and 12 knots is a good
@@ -285,7 +320,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         </section>
 
         <footer>
-          Forecast data from the US National Weather Service.
+          Forecast data from Open-Meteo, CC BY 4.0. Second opinion from the US National
+          Weather Service, shown for US spots.
           {spot.outline ? ` ${spot.name} outline from OpenStreetMap contributors, ODbL.` : ''}
         </footer>
       </div>

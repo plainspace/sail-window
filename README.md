@@ -4,18 +4,29 @@ Tells you when the conditions are right to sail at one specific place.
 
 A weather forecast answers "what will the weather be." That is not the question. The
 question is "when this week can I actually go," which has a yes or no answer. This
-reads the US National Weather Service forecast, applies a few plain rules, and gives
-you the answer.
+reads the [Open-Meteo](https://open-meteo.com) forecast, applies a few plain rules,
+and gives you the answer.
 
 Live example: [Lake Dunmore, Vermont](https://sail-window.vercel.app/dunmore)
 
-## Coverage is the United States only
+## Coverage is worldwide
 
-Forecasts come from the [US National Weather Service](https://www.weather.gov/documentation/services-web-api),
-which covers the United States and its territories and nothing else. If your water is
-outside the US, this app cannot answer for it. Swapping in another source would mean
-rewriting `lib/nws.ts`, which is the only module that knows where the data comes from,
-but nobody has done that.
+The primary forecast comes from [Open-Meteo](https://open-meteo.com), which covers the
+whole planet, needs no API key, and is free for non-commercial use. Point a spot at any
+water on Earth and it works.
+
+For US spots the [US National Weather Service](https://www.weather.gov/documentation/services-web-api)
+is fetched as well and kept as a quiet second opinion. NWS gridpoint forecasts are
+human-adjusted, and in sheltered valley terrain forecasters often knock the wind down
+in a way that is wrong for the middle of an open lake. So when the two sources disagree
+on today's peak sustained wind by 25% or more, the page names the gap in one line near
+the headline, for example "NWS is lower today: peak 6 kt against Open-Meteo's 11 kt."
+On ordinary days, when they agree, it says nothing.
+
+The second opinion is US-only, because NWS covers only the US and its territories. It
+requires `NWS_CONTACT` (see below) and can never break the page: if the NWS call fails,
+or the spot is outside the US, the comparison line is silently omitted and the rest of
+the page renders from Open-Meteo as normal.
 
 ## How it decides
 
@@ -62,22 +73,23 @@ Requires Node 20 or newer.
 
 ```bash
 npm install
-cp .env.example .env     # then set NWS_CONTACT
+cp .env.example .env     # optional: set NWS_CONTACT for the US second opinion
 npm run dev
 ```
 
-`NWS_CONTACT` is required. The National Weather Service asks every client to identify
-itself with a contact address in the User-Agent header and rejects requests that do
-not. Put your own email or a URL there. The app throws a clear error at startup rather
-than sending an anonymous request that NWS will refuse.
+The primary Open-Meteo forecast needs no key and no configuration. `NWS_CONTACT` is
+optional and only powers the US second opinion: the National Weather Service asks every
+client to identify itself with a contact address in the User-Agent header and rejects
+requests that do not, so a US spot needs it set to fetch the comparison. Leave it unset
+and US spots simply skip the second opinion; spots outside the US never use it.
 
 ```bash
 npm test          # unit tests, no network
 npm run build     # production build, runs the TypeScript check
 ```
 
-The test suite never hits the network. It runs against a real NWS response saved in
-`tests/fixtures/`.
+The test suite never hits the network. It runs against real Open-Meteo and NWS
+responses saved in `tests/fixtures/`.
 
 ## Add your own spot
 
@@ -104,15 +116,16 @@ It appears at `/your-spot`. Everything else is derived.
 
 This is the one step worth care, and the mistake is easy to make invisibly.
 
-**Put the point on the water, not on the shore.** The NWS forecast grid is roughly
-2.5 km square. A coordinate a few hundred metres off can land in a neighbouring cell,
-on the wrong side of a ridge, and the app will confidently report a forecast for the
-wrong valley. This exact bug shipped here: the original Dunmore coordinate sat on land
-southwest of the lake and resolved to a different grid cell than the lake's centre.
+**Put the point on the water, not on the shore.** Model grids are several kilometres
+across, so a coordinate a few hundred metres off can land in a neighbouring cell, on the
+wrong side of a ridge, and the app will confidently report a forecast for the wrong
+valley. Models also carry land and sea masks, and surface wind over water differs from
+wind over the trees beside it. This exact bug shipped here: the original Dunmore
+coordinate sat on land southwest of the lake and resolved to a different NWS grid cell
+than the lake's centre.
 
-The forecast grid is resolved automatically from your lat/lon, so you never look it up
-by hand. NWS limits coordinates to four decimal places and redirects requests carrying
-more, which `fetch` follows transparently.
+You never look a grid up by hand. Open-Meteo takes the lat/lon directly, and the NWS
+second opinion resolves its own grid from the same coordinates.
 
 If you want the coordinate checked, give your spot an `outline` and the test suite will
 assert the point falls inside it.
@@ -138,9 +151,11 @@ Expect this to take longer than you think, which is why it is optional.
 ## What it is not
 
 - **Not a marine forecast.** No wave height, no water temperature, no marine warnings.
-- **Not resolved to your water.** The grid is about 2.5 km square. A lake in a valley
-  with a mountain beside it gets terrain smoothed away entirely. No public forecast
-  resolves that, and this app does not pretend to.
+- **Not resolved to your water.** Model grids run from roughly 3 km for high-resolution
+  short-range models up to 13 km for the global ones, and Open-Meteo picks per location
+  and lead time. A lake in a valley with a mountain beside it gets terrain smoothed away
+  entirely at any of those scales. No public forecast resolves that, and this app does
+  not pretend to.
 - **Not a substitute for looking outside.**
 
 ## Ideas not built
@@ -164,12 +179,14 @@ Source code is MIT. See [LICENSE](LICENSE).
 
 Lake outlines under `data/` are **not** MIT. They come from OpenStreetMap and carry the
 Open Database License, which is share-alike: redistribute them and the attribution and
-the openness travel with them. Forecast data is public domain, being a work of the US
-federal government.
+the openness travel with them. Primary forecast data comes from Open-Meteo under
+CC BY 4.0. The US National Weather Service second opinion is public domain, being a work
+of the US federal government.
 
 ## Built with
 
 Next.js, TypeScript, Vitest, [suncalc](https://github.com/mourner/suncalc) for sunrise
 and sunset, [OverlayScrollbars](https://kingsora.github.io/OverlayScrollbars/) for the
-forecast strip. Forecast data from the US National Weather Service, a public domain US
-government source. Lake outline from OpenStreetMap contributors, ODbL.
+forecast strip. Forecast data from [Open-Meteo](https://open-meteo.com), CC BY 4.0, with
+the US National Weather Service as a second opinion for US spots. Lake outline from
+OpenStreetMap contributors, ODbL.
