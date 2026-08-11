@@ -1,0 +1,38 @@
+MIT License
+
+Copyright (c) 2026 Jared Volpe
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+The MIT licence above covers the source code in this repository. It does not
+cover everything shipped with it:
+
+Lake outlines under `data/` are derived from OpenStreetMap and are licensed
+under the Open Database License (ODbL) by OpenStreetMap contributors, not under
+the MIT licence above. `data/lake-dunmore.json` comes from OSM relation 216439.
+If you redistribute or build on that data, ODbL applies to it: keep the
+attribution, and keep derivatives of the data open.
+See https://www.openstreetmap.org/copyright
+
+Forecast data is retrieved at runtime from the US National Weather Service, a
+work of the US federal government, and is in the public domain. None of it is
+stored in this repository apart from one saved API response used as a test
+fixture.

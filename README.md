@@ -158,6 +158,15 @@ Expect this to take longer than you think, which is why it is optional.
   has survived across successive forecasts. A window seven days out is a model artifact
   as often as a plan, and today the app treats it as equally real.
 
+## Licence
+
+Source code is MIT. See [LICENSE](LICENSE).
+
+Lake outlines under `data/` are **not** MIT. They come from OpenStreetMap and carry the
+Open Database License, which is share-alike: redistribute them and the attribution and
+the openness travel with them. Forecast data is public domain, being a work of the US
+federal government.
+
 ## Built with
 
 Next.js, TypeScript, Vitest, [suncalc](https://github.com/mourner/suncalc) for sunrise
