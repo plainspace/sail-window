@@ -1,6 +1,5 @@
 import { CONFIG } from './config'
 import { judge, type FailReason } from './rules'
-import { fetchMeters } from './geometry'
 import type { HourlyConditions } from './nws'
 
 export type SailWindow = {
@@ -12,8 +11,6 @@ export type SailWindow = {
   directions: string[]
   temperatureFAvg: number
   hasUnknownGust: boolean
-  fetchMetersMin: number
-  fetchMetersMax: number
 }
 
 export type NearMiss = {
@@ -47,7 +44,6 @@ function runs<T>(items: T[], key: (t: T) => string | null): T[][] {
 
 export function buildWindows(hours: HourlyConditions[]): SailWindow[] {
   return runs(hours, (h) => (judge(h).pass ? 'pass' : null)).map((group) => {
-    const fetches = group.map((h) => fetchMeters(h.windDirectionDeg))
     return {
       start: group[0].startTime,
       end: endOf(group[group.length - 1]),
@@ -58,8 +54,6 @@ export function buildWindows(hours: HourlyConditions[]): SailWindow[] {
       temperatureFAvg:
         Math.round(group.reduce((s, h) => s + h.temperatureF, 0) / group.length),
       hasUnknownGust: group.some((h) => h.gustKt === null),
-      fetchMetersMin: Math.round(Math.min(...fetches)),
-      fetchMetersMax: Math.round(Math.max(...fetches)),
     }
   })
 }

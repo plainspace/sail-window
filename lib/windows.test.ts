@@ -57,12 +57,6 @@ describe('buildWindows', () => {
   it('returns nothing when nothing qualifies', () => {
     expect(buildWindows(run(12, { windKt: 2 }))).toEqual([])
   })
-
-  it('attaches a positive fetch range to a window', () => {
-    const [w] = buildWindows(run(3))
-    expect(w.fetchMetersMin).toBeGreaterThan(0)
-    expect(w.fetchMetersMax).toBeGreaterThanOrEqual(w.fetchMetersMin)
-  })
 })
 
 describe('buildNearMisses', () => {
