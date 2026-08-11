@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { buildWindows, buildNearMisses } from './windows'
+import { getSpot } from '@/config/spots'
 import type { HourlyConditions } from './nws'
+
+const spot = getSpot('dunmore')!
 
 const HOUR = 3600_000
 // 2026-08-15T14:00:00Z is 10am ET, safely inside daylight and season.
@@ -22,18 +25,18 @@ function run(n: number, over: Partial<HourlyConditions> = {}, offset = 0): Hourl
 
 describe('buildWindows', () => {
   it('keeps a three-hour run', () => {
-    const w = buildWindows(run(3))
+    const w = buildWindows(run(3), spot)
     expect(w).toHaveLength(1)
     expect(w[0].hours).toBe(3)
   })
 
   it('discards a two-hour run', () => {
-    expect(buildWindows(run(2))).toHaveLength(0)
+    expect(buildWindows(run(2), spot)).toHaveLength(0)
   })
 
   it('splits on a failing hour rather than bridging it', () => {
     const hours = [...run(3), ...run(1, { windKt: 2 }, 3), ...run(3, {}, 4)]
-    const w = buildWindows(hours)
+    const w = buildWindows(hours, spot)
     expect(w).toHaveLength(2)
   })
 
@@ -43,7 +46,7 @@ describe('buildWindows', () => {
       ...run(1, { windKt: 15, windDirection: 'SW' }, 1),
       ...run(1, { windKt: 12, windDirection: 'S' }, 2),
     ]
-    const [w] = buildWindows(hours)
+    const [w] = buildWindows(hours, spot)
     expect(w.windKtMin).toBe(9)
     expect(w.windKtMax).toBe(15)
     expect(w.directions).toEqual(['S', 'SW'])
@@ -52,17 +55,17 @@ describe('buildWindows', () => {
 
   it('flags a window containing an hour with an unknown gust', () => {
     const hours = [...run(2), ...run(1, { gustKt: null }, 2)]
-    expect(buildWindows(hours)[0].hasUnknownGust).toBe(true)
+    expect(buildWindows(hours, spot)[0].hasUnknownGust).toBe(true)
   })
 
   it('returns nothing when nothing qualifies', () => {
-    expect(buildWindows(run(12, { windKt: 2 }))).toEqual([])
+    expect(buildWindows(run(12, { windKt: 2 }), spot)).toEqual([])
   })
 })
 
 describe('buildNearMisses', () => {
   it('reports a run that failed exactly one gate', () => {
-    const misses = buildNearMisses(run(4, { precipProbability: 35 }))
+    const misses = buildNearMisses(run(4, { precipProbability: 35 }), spot)
     expect(misses).toHaveLength(1)
     expect(misses[0].reason).toBe('precip')
     expect(misses[0].hours).toBe(4)
@@ -70,14 +73,14 @@ describe('buildNearMisses', () => {
   })
 
   it('ignores a run that failed two gates', () => {
-    expect(buildNearMisses(run(4, { precipProbability: 35, windKt: 2 }))).toEqual([])
+    expect(buildNearMisses(run(4, { precipProbability: 35, windKt: 2 }), spot)).toEqual([])
   })
 
   it('ignores a near-miss run shorter than the minimum', () => {
-    expect(buildNearMisses(run(2, { precipProbability: 35 }))).toEqual([])
+    expect(buildNearMisses(run(2, { precipProbability: 35 }), spot)).toEqual([])
   })
 
   it('does not report hours that actually qualify', () => {
-    expect(buildNearMisses(run(5))).toEqual([])
+    expect(buildNearMisses(run(5), spot)).toEqual([])
   })
 })

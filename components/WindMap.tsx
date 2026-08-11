@@ -4,18 +4,28 @@ import { projectToSvg } from '@/lib/projection'
 const W = 260
 const H = 460
 
+// Older full-lake wind map. Not currently mounted, kept for reference. Renders
+// nothing without an outline, and takes the spot's name so it carries no hardcoded
+// location.
 export function WindMap({
+  outline,
+  name,
   bearingDeg,
   windKt,
   cardinal,
   fetchMi,
 }: {
+  outline?: string
+  name: string
   bearingDeg: number
   windKt: number
   cardinal: string
   fetchMi: number
 }) {
-  const { path } = projectToSvg(loadLakePolygon(), W, H)
+  const ring = loadLakePolygon(outline)
+  if (!ring) return null
+
+  const { path } = projectToSvg(ring, W, H)
   // NWS reports the direction wind comes FROM. Motion points the opposite way.
   const motion = bearingDeg + 180
   const arrows: [number, number][] = []
@@ -24,7 +34,7 @@ export function WindMap({
   return (
     <figure className="map">
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img"
-           aria-label={`Lake Dunmore, wind from the ${cardinal} at ${Math.round(windKt)} knots`}>
+           aria-label={`${name}, wind from the ${cardinal} at ${Math.round(windKt)} knots`}>
         <defs>
           <clipPath id="lake"><path d={path} /></clipPath>
         </defs>
@@ -44,7 +54,7 @@ export function WindMap({
         <br />
         <span className="quiet">
           One NWS reading covers the whole lake, so the arrows do not vary. The fetch line length is
-          the real derived value. Lake outline: OpenStreetMap contributors, ODbL.
+          the real derived value. Outline: OpenStreetMap contributors, ODbL.
         </span>
       </figcaption>
     </figure>

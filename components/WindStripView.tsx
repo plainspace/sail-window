@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import type { OverlayScrollbarsComponentRef } from 'overlayscrollbars-react'
 import { OverlayScrollbarsComponent } from './overlay-scrollbars-component'
 
@@ -30,13 +30,16 @@ export type DayGroup = {
   cols: Col[]
 }
 
+// The knot scale for the bars, driven by the spot's wind band: `max` is the top of
+// the axis, `min`/`hi` are the target-band bounds (the sailable window).
+export type Scale = { max: number; min: number; hi: number }
+
 const dotAria: Record<DotState, string> = {
   window: 'sailable window',
   hour: 'isolated good hours but no window',
   none: 'nothing sailable',
 }
 
-const SCALE_MAX = 25
 // x position (px from the viewport's left edge) that defines the "left edge" of the
 // strip, just right of the pinned axis. Used for both scroll targeting and the
 // active-day IntersectionObserver.
@@ -106,7 +109,7 @@ function DirArrow({ fromDeg }: { fromDeg: number }) {
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-export function WindStripView({ days }: { days: DayGroup[] }) {
+export function WindStripView({ days, scale }: { days: DayGroup[]; scale: Scale }) {
   const osRef = useRef<OverlayScrollbarsComponentRef | null>(null)
   const dayRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   // The element OverlayScrollbars actually scrolls (its internal viewport), not the host.
@@ -184,8 +187,8 @@ export function WindStripView({ days }: { days: DayGroup[] }) {
 
       <div className="strip-scroll">
         <div className="strip-axis" aria-hidden="true">
-          <span style={{ bottom: `${(20 / SCALE_MAX) * 100}%` }}>20</span>
-          <span style={{ bottom: `${(7 / SCALE_MAX) * 100}%` }}>7</span>
+          <span style={{ bottom: `${(scale.hi / scale.max) * 100}%` }}>{scale.hi}</span>
+          <span style={{ bottom: `${(scale.min / scale.max) * 100}%` }}>{scale.min}</span>
           <span style={{ bottom: '0' }}>0 kt</span>
         </div>
 
@@ -203,7 +206,16 @@ export function WindStripView({ days }: { days: DayGroup[] }) {
             },
           }}
         >
-          <div className="strip-inner">
+          <div
+            className="strip-inner"
+            style={
+              {
+                // Target band position on the 0-to-max scale, read by .graph::before.
+                '--band-bottom': `${(scale.min / scale.max) * 100}%`,
+                '--band-height': `${((scale.hi - scale.min) / scale.max) * 100}%`,
+              } as CSSProperties
+            }
+          >
             {days.map((d) => (
               <div className="day" key={d.key} data-day={d.key} ref={setDayRef(d.key)}>
                 <div className="day-label">{d.key}</div>

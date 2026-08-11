@@ -1,19 +1,11 @@
 import { judge } from '@/lib/rules'
 import { buildWindows } from '@/lib/windows'
 import type { HourlyConditions } from '@/lib/nws'
-import { WindStripView, type DayGroup } from './WindStripView'
+import type { Spot } from '@/config/spots'
+import { WindStripView, type DayGroup, type Scale } from './WindStripView'
 
-const TZ = 'America/New_York'
-const SCALE_MAX = 25 // knots; fixed so bars compare across days
-
-const fmt = (iso: string, opts: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat('en-US', { timeZone: TZ, ...opts }).format(new Date(iso))
-
-const dayLabel = (iso: string) => fmt(iso, { weekday: 'short', month: 'short', day: 'numeric' })
-const dayChip = (iso: string) => fmt(iso, { weekday: 'short' })
-const dayFull = (iso: string) => fmt(iso, { weekday: 'long' })
-const hourShort = (iso: string) => fmt(iso, { hour: 'numeric' }).toLowerCase().replace(' ', '')
-const hourLong = (iso: string) => fmt(iso, { weekday: 'long', hour: 'numeric' }).toLowerCase()
+const fmt = (iso: string, tz: string, opts: Intl.DateTimeFormatOptions) =>
+  new Intl.DateTimeFormat('en-US', { timeZone: tz, ...opts }).format(new Date(iso))
 
 const reasonLabel: Record<string, string> = {
   dark: 'after dark',
@@ -24,10 +16,10 @@ const reasonLabel: Record<string, string> = {
   'off-season': 'off season',
 }
 
-function speedClass(windKt: number, pass: boolean): string {
+function speedClass(windKt: number, pass: boolean, spot: Spot): string {
   if (pass) return 'sp-pass'
-  if (windKt < 7) return 'sp-light'
-  if (windKt > 20) return 'sp-strong'
+  if (windKt < spot.wind.minKt) return 'sp-light'
+  if (windKt > spot.wind.maxKt) return 'sp-strong'
   return 'sp-mid'
 }
 
@@ -51,11 +43,27 @@ const skyWord: Record<Sky, string> = {
 
 // Server component: builds a fully serializable day-group structure and hands it
 // to the client view. No functions or JSX cross the boundary, only plain data.
-export function WindStrip({ hours }: { hours: HourlyConditions[] }) {
+export function WindStrip({ hours, spot }: { hours: HourlyConditions[]; spot: Spot }) {
+  const tz = spot.tz
+  const dayLabel = (iso: string) => fmt(iso, tz, { weekday: 'short', month: 'short', day: 'numeric' })
+  const dayChip = (iso: string) => fmt(iso, tz, { weekday: 'short' })
+  const dayFull = (iso: string) => fmt(iso, tz, { weekday: 'long' })
+  const hourShort = (iso: string) => fmt(iso, tz, { hour: 'numeric' }).toLowerCase().replace(' ', '')
+  const hourLong = (iso: string) => fmt(iso, tz, { weekday: 'long', hour: 'numeric' }).toLowerCase()
+
+  // Fixed knot scale, with a little headroom above the strong-wind gate so bars
+  // compare across days. Derived from the spot so the axis and target band match
+  // its own wind band. For Dunmore (max 20) this is 25, unchanged.
+  const scale: Scale = {
+    max: spot.wind.maxKt + 5,
+    min: spot.wind.minKt,
+    hi: spot.wind.maxKt,
+  }
+
   // Days that contain a qualifying window (3+ consecutive passing hours), keyed by
   // the same local-date label used to group the strip, so matching stays in the
-  // lake's timezone rather than UTC.
-  const windowDays = new Set(buildWindows(hours).map((w) => dayLabel(w.start)))
+  // spot's timezone rather than UTC.
+  const windowDays = new Set(buildWindows(hours, spot).map((w) => dayLabel(w.start)))
   const days: DayGroup[] = []
 
   for (const h of hours) {
@@ -66,16 +74,16 @@ export function WindStrip({ hours }: { hours: HourlyConditions[] }) {
       days.push(group)
     }
 
-    const v = judge(h)
+    const v = judge(h, spot)
     const pass = v.pass
     const reasons = v.pass ? [] : v.reasons
     const dark = reasons.includes('dark')
-    const barPct = Math.min(h.windKt / SCALE_MAX, 1) * 100
+    const barPct = Math.min(h.windKt / scale.max, 1) * 100
     const showGust = h.gustKt !== null && h.gustKt > h.windKt
-    const gustPct = showGust ? Math.min((h.gustKt as number) / SCALE_MAX, 1) * 100 : 0
+    const gustPct = showGust ? Math.min((h.gustKt as number) / scale.max, 1) * 100 : 0
     const sky = skyState(h.skyCoverPct)
     const precipPct = Math.round(h.precipProbability)
-    const precipFail = reasons.includes('precip') // failed the 30% gate
+    const precipFail = reasons.includes('precip') // failed the precip gate
     const skyTip =
       h.skyCoverPct === null ? 'sky n/a' : `${skyWord[sky]} ${Math.round(h.skyCoverPct)}%`
     const title =
@@ -93,7 +101,7 @@ export function WindStrip({ hours }: { hours: HourlyConditions[] }) {
       showGust,
       pass,
       dark,
-      speed: speedClass(h.windKt, pass),
+      speed: speedClass(h.windKt, pass, spot),
       sky,
       precipPct,
       precipFail,
@@ -109,5 +117,5 @@ export function WindStrip({ hours }: { hours: HourlyConditions[] }) {
     else group.dot = 'none'
   }
 
-  return <WindStripView days={days} />
+  return <WindStripView days={days} scale={scale} />
 }

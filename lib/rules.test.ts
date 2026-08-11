@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { judge, inSeason } from './rules'
+import { getSpot } from '@/config/spots'
 import type { HourlyConditions } from './nws'
+
+const spot = getSpot('dunmore')!
 
 // 2026-08-15T16:00:00Z is noon ET, in season, in daylight.
 const base: HourlyConditions = {
@@ -13,7 +16,7 @@ const base: HourlyConditions = {
   temperatureF: 75,
   skyCoverPct: 40,
 }
-const at = (over: Partial<HourlyConditions>) => judge({ ...base, ...over })
+const at = (over: Partial<HourlyConditions>) => judge({ ...base, ...over }, spot)
 
 describe('wind gates', () => {
   it('accepts the inclusive bounds', () => {
@@ -58,17 +61,17 @@ describe('reason collection', () => {
 
 describe('season', () => {
   it('includes both boundary days', () => {
-    expect(inSeason('2026-05-01T16:00:00Z')).toBe(true)
-    expect(inSeason('2026-11-01T16:00:00Z')).toBe(true)
+    expect(inSeason('2026-05-01T16:00:00Z', spot)).toBe(true)
+    expect(inSeason('2026-11-01T16:00:00Z', spot)).toBe(true)
   })
 
   it('excludes the days outside', () => {
-    expect(inSeason('2026-04-30T16:00:00Z')).toBe(false)
-    expect(inSeason('2026-11-02T16:00:00Z')).toBe(false)
+    expect(inSeason('2026-04-30T16:00:00Z', spot)).toBe(false)
+    expect(inSeason('2026-11-02T16:00:00Z', spot)).toBe(false)
   })
 
   it('rejects a perfect January afternoon on the frozen lake', () => {
-    const v = judge({ ...base, startTime: '2026-01-15T17:00:00Z', temperatureF: 34 })
+    const v = judge({ ...base, startTime: '2026-01-15T17:00:00Z', temperatureF: 34 }, spot)
     expect(v.pass).toBe(false)
     if (!v.pass) expect(v.reasons).toContain('off-season')
   })
@@ -76,7 +79,7 @@ describe('season', () => {
 
 describe('daylight', () => {
   it('rejects the middle of the night', () => {
-    const v = judge({ ...base, startTime: '2026-08-15T07:00:00Z' })
+    const v = judge({ ...base, startTime: '2026-08-15T07:00:00Z' }, spot)
     expect(v.pass).toBe(false)
     if (!v.pass) expect(v.reasons).toContain('dark')
   })

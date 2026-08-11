@@ -1,4 +1,5 @@
-import { CONFIG } from './config'
+import { nwsUserAgent } from './config'
+import type { Spot } from '@/config/spots'
 
 export type HourlyConditions = {
   startTime: string
@@ -86,12 +87,45 @@ export function parseGridpoint(json: unknown): HourlyConditions[] {
   return rows
 }
 
-export async function fetchForecast(): Promise<{ raw: unknown; hours: HourlyConditions[] }> {
+// NWS grid assignments for a coordinate never change, so resolve the gridpoint URL
+// once per lat/lon and keep it. Hardcoding the grid by hand is how the original bug
+// happened, where a point on land forecast a different cell than the water.
+const gridpointCache = new Map<string, Promise<string>>()
+
+export function resolveGridpointUrl(lat: number, lon: number): Promise<string> {
+  const key = `${lat},${lon}`
+  const cached = gridpointCache.get(key)
+  if (cached) return cached
+
+  const pending = (async () => {
+    // revalidate: false caches this indefinitely in Next's data cache too; the Map
+    // dedupes within a single render.
+    const res = await fetch(`https://api.weather.gov/points/${lat},${lon}`, {
+      headers: { 'User-Agent': nwsUserAgent(), Accept: 'application/geo+json' },
+      next: { revalidate: false },
+    })
+    if (!res.ok) throw new Error(`NWS points lookup returned ${res.status} ${res.statusText}`)
+    const json = (await res.json()) as { properties?: { forecastGridData?: unknown } }
+    const url = json.properties?.forecastGridData
+    if (typeof url !== 'string') {
+      throw new Error('NWS points response did not include properties.forecastGridData')
+    }
+    return url
+  })()
+
+  gridpointCache.set(key, pending)
+  // Do not cache a failed lookup: drop it so the next call retries.
+  pending.catch(() => gridpointCache.delete(key))
+  return pending
+}
+
+export async function fetchForecast(spot: Spot): Promise<{ raw: unknown; hours: HourlyConditions[] }> {
+  const gridpointUrl = await resolveGridpointUrl(spot.lat, spot.lon)
   // Cache the upstream response for 15 minutes: the page renders per request, but
   // NWS updates this gridpoint only a few times a day and asks callers not to poll
   // aggressively, so one call per 15 minutes is generous.
-  const res = await fetch(CONFIG.nws.gridpointUrl, {
-    headers: { 'User-Agent': CONFIG.nws.userAgent, Accept: 'application/geo+json' },
+  const res = await fetch(gridpointUrl, {
+    headers: { 'User-Agent': nwsUserAgent(), Accept: 'application/geo+json' },
     next: { revalidate: 900 },
   })
   if (!res.ok) throw new Error(`NWS returned ${res.status} ${res.statusText}`)

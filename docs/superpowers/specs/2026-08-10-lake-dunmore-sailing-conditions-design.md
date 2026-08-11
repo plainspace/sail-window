@@ -317,7 +317,7 @@ this app** from the angle, not supplied by NWS.
 ### Request requirements
 
 NWS rejects requests lacking a `User-Agent` header carrying contact information.
-Confirmed: requests sent with `dunmore-sailing-app (jaredvolpe@gmail.com)` succeed.
+Confirmed: requests sent with `dunmore-sailing-app (you@example.com)` succeed.
 
 ### Caching
 

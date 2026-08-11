@@ -1,14 +1,25 @@
-export const CONFIG = {
-  // Centroid of the lake polygon, verified inside the water by point-in-polygon.
-  // The earlier value (43.885, -73.085) was on land southwest of the lake and
-  // resolved to a different NWS grid cell.
-  location: { lat: 43.90234, lon: -73.07574, tz: 'America/New_York' },
-  wind: { minKt: 7, maxKt: 20, maxGustKt: 30 },
-  precip: { maxProbability: 30 },
-  window: { minHours: 3 },
-  season: { start: { month: 5, day: 1 }, end: { month: 11, day: 1 } },
-  nws: {
-    gridpointUrl: 'https://api.weather.gov/gridpoints/BTV/97,31',
-    userAgent: 'dunmore-sailing-app (jaredvolpe@gmail.com)',
-  },
-} as const
+// Genuinely global settings, shared by every spot. Per-location values (coordinates,
+// wind band, season, outline) live in config/spots.ts instead.
+
+/**
+ * The contact the NWS requires in every request's User-Agent. NWS rejects calls
+ * without one, so this throws rather than sending an anonymous request. Read from
+ * the environment so no personal address is baked into source. See .env.example.
+ */
+export function nwsContact(): string {
+  const contact = process.env.NWS_CONTACT
+  if (!contact) {
+    throw new Error(
+      'NWS_CONTACT is not set. The US National Weather Service requires a contact ' +
+        '(an email address or URL) in the User-Agent of every request and rejects ' +
+        'calls that omit it. Set NWS_CONTACT in your environment, for example ' +
+        'NWS_CONTACT=you@example.com. See .env.example.',
+    )
+  }
+  return contact
+}
+
+/** The User-Agent sent to NWS: a stable app identifier plus the required contact. */
+export function nwsUserAgent(): string {
+  return `sail-window-app (${nwsContact()})`
+}

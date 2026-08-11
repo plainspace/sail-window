@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - **Data source is `https://api.weather.gov/gridpoints/BTV/97,30`.** Never `/forecast/hourly`, which has no `windGust`, gives wind direction as a cardinal string, and gives wind speed as a formatted string.
-- **Every NWS request MUST send** `User-Agent: dunmore-sailing-app (jaredvolpe@gmail.com)`. Requests without it are rejected.
+- **Every NWS request MUST send** `User-Agent: dunmore-sailing-app (you@example.com)`. Requests without it are rejected.
 - **NWS `windDirection` is the direction the wind blows FROM** (meteorological convention). A wind arrow depicting motion points toward `deg + 180`.
 - **Gridpoint values are run-length encoded** as `{ validTime: "<ISO instant>/<ISO duration>", value: number }`. Each property has its own independent timeline. **Never zip properties positionally.**
 - **Units at the boundary only.** NWS gives km/h and Celsius. `lib/nws.ts` converts to knots (`kmh / 1.852`) and Fahrenheit. No other module sees any other unit.
@@ -109,7 +109,7 @@ export const CONFIG = {
   season: { start: { month: 5, day: 1 }, end: { month: 11, day: 1 } },
   nws: {
     gridpointUrl: 'https://api.weather.gov/gridpoints/BTV/97,30',
-    userAgent: 'dunmore-sailing-app (jaredvolpe@gmail.com)',
+    userAgent: 'dunmore-sailing-app (you@example.com)',
   },
 } as const
 ```
@@ -1038,7 +1038,7 @@ git commit -m "Add page with headline, window list, hour grid, and near misses"
 - [ ] **Step 1: Fetch the lake outline from OpenStreetMap**
 
 ```bash
-curl -s -X POST -H "User-Agent: dunmore-sailing-app (jaredvolpe@gmail.com)" \
+curl -s -X POST -H "User-Agent: dunmore-sailing-app (you@example.com)" \
   --data-urlencode 'data=[out:json];way["natural"="water"]["name"="Lake Dunmore"](43.83,-73.13,43.94,-73.03);out geom;' \
   https://overpass-api.de/api/interpreter \
   -o /tmp/dunmore-osm.json
