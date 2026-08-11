@@ -67,19 +67,19 @@ describe('buildWindows', () => {
 
 describe('buildNearMisses', () => {
   it('reports a run that failed exactly one gate', () => {
-    const misses = buildNearMisses(run(4, { precipProbability: 22 }))
+    const misses = buildNearMisses(run(4, { precipProbability: 35 }))
     expect(misses).toHaveLength(1)
     expect(misses[0].reason).toBe('precip')
     expect(misses[0].hours).toBe(4)
-    expect(misses[0].margin).toContain('22')
+    expect(misses[0].margin).toContain('35')
   })
 
   it('ignores a run that failed two gates', () => {
-    expect(buildNearMisses(run(4, { precipProbability: 22, windKt: 2 }))).toEqual([])
+    expect(buildNearMisses(run(4, { precipProbability: 35, windKt: 2 }))).toEqual([])
   })
 
   it('ignores a near-miss run shorter than the minimum', () => {
-    expect(buildNearMisses(run(2, { precipProbability: 22 }))).toEqual([])
+    expect(buildNearMisses(run(2, { precipProbability: 35 }))).toEqual([])
   })
 
   it('does not report hours that actually qualify', () => {

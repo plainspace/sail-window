@@ -5,7 +5,7 @@ import { loadLakePolygon } from './geometry'
 describe('CONFIG', () => {
   it('encodes the approved gate thresholds', () => {
     expect(CONFIG.wind).toEqual({ minKt: 7, maxKt: 20, maxGustKt: 30 })
-    expect(CONFIG.precip.maxProbability).toBe(20)
+    expect(CONFIG.precip.maxProbability).toBe(30)
     expect(CONFIG.window.minHours).toBe(3)
   })
 

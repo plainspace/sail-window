@@ -39,8 +39,8 @@ describe('gust gate', () => {
 
 describe('precip gate', () => {
   it('is strictly less than the threshold', () => {
-    expect(at({ precipProbability: 19 }).pass).toBe(true)
-    expect(at({ precipProbability: 20 })).toEqual({ pass: false, reasons: ['precip'] })
+    expect(at({ precipProbability: 29 }).pass).toBe(true)
+    expect(at({ precipProbability: 30 })).toEqual({ pass: false, reasons: ['precip'] })
   })
 })
 
