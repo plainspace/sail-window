@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { CONFIG } from './config'
+import { loadLakePolygon } from './geometry'
 
 describe('CONFIG', () => {
   it('encodes the approved gate thresholds', () => {
@@ -14,7 +15,24 @@ describe('CONFIG', () => {
   })
 
   it('points at the verified BTV gridpoint', () => {
-    expect(CONFIG.nws.gridpointUrl).toBe('https://api.weather.gov/gridpoints/BTV/97,30')
+    expect(CONFIG.nws.gridpointUrl).toBe('https://api.weather.gov/gridpoints/BTV/97,31')
     expect(CONFIG.nws.userAgent).toContain('dunmore-sailing-app')
+  })
+
+  it('places the forecast point inside the lake, not on the shore', () => {
+    // Regression guard. The original point (43.885, -73.085) was on land
+    // southwest of the lake and resolved to a different NWS grid cell.
+    const ring = loadLakePolygon()
+    const { lat, lon } = CONFIG.location
+    let inside = false
+    for (let i = 0; i < ring.length - 1; i++) {
+      const [x1, y1] = ring[i]
+      const [x2, y2] = ring[i + 1]
+      if (y1 > lat !== y2 > lat) {
+        const xInt = x1 + ((lat - y1) * (x2 - x1)) / (y2 - y1)
+        if (lon < xInt) inside = !inside
+      }
+    }
+    expect(inside).toBe(true)
   })
 })
