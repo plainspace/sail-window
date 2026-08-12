@@ -211,8 +211,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
             </a>
             <p className="subscribe-note">
               Adds a calendar that refetches itself, so windows appear and disappear as
-              the forecast changes rather than going stale. They show as free, never
-              busy. To add it by hand instead, paste <code>{feedUrl}</code>.
+              the forecast changes rather than going stale. They show as free, never busy.
+            </p>
+            <p className="subscribe-note">
+              If that opens a browser instead of your calendar, nothing is broken here...
+              your system has <code>webcal:</code> registered to the wrong app, which
+              browsers do quietly. Add it by URL instead: paste <code>{feedUrl}</code> into
+              your calendar's <em>subscribe</em> or <em>add by URL</em> field. That route
+              avoids the scheme entirely and is also what Google Calendar wants.
             </p>
           </div>
         </section>
