@@ -214,8 +214,11 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
               <a className="subscribe-link" href={feedWebcal}>
                 Subscribe to these windows
               </a>
+              {/* "Download a snapshot", not "Download this week". Both buttons cover the
+                  same week, so scope differentiates nothing... the difference is that one
+                  keeps updating and one does not, and the label has to carry that. */}
               <a className="subscribe-link" href={feedDownload} download>
-                Download this week
+                Download a snapshot
               </a>
             </div>
             <p className="subscribe-note">
