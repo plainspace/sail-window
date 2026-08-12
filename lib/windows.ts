@@ -8,6 +8,17 @@ export type SailWindow = {
   hours: number
   windKtMin: number
   windKtMax: number
+  /**
+   * The strongest gust in the window, or null if no hour reported one.
+   *
+   * This exists because for a long time it did not, and its absence was the single
+   * most misleading thing about the app. Gusts gated every window and then appeared
+   * in exactly one place: the margin on a near miss, i.e. only when a gust was bad
+   * enough to disqualify the day. Below the ceiling the number was invisible, so a
+   * Friday of 11 kt sustained gusting 22 rendered as "7 to 13 kt" and read as chill.
+   * The explainer had been making this exact argument in prose the whole time.
+   */
+  gustKtMax: number | null
   directions: string[]
   temperatureFAvg: number
   hasUnknownGust: boolean
@@ -50,12 +61,42 @@ export function buildWindows(hours: HourlyConditions[], spot: Spot): SailWindow[
       hours: group.length,
       windKtMin: Math.min(...group.map((h) => h.windKt)),
       windKtMax: Math.max(...group.map((h) => h.windKt)),
+      // Known gusts only. An hour with no gust reading is unknown, not calm, so it
+      // must not drag the maximum down... hasUnknownGust flags that separately.
+      gustKtMax: (() => {
+        const known = group.map((h) => h.gustKt).filter((g): g is number => g !== null)
+        return known.length ? Math.max(...known) : null
+      })(),
       directions: [...new Set(group.map((h) => h.windDirection))],
       temperatureFAvg:
         Math.round(group.reduce((s, h) => s + h.temperatureF, 0) / group.length),
       hasUnknownGust: group.some((h) => h.gustKt === null),
     }
   })
+}
+
+/**
+ * "gusting 22", or null when there is nothing worth saying.
+ *
+ * Nothing is worth saying in two cases: no hour reported a gust, or the gust does not
+ * exceed the sustained maximum. On a steady day "gusting 13" against a 13 kt maximum
+ * is noise. The number earns its place precisely when the two diverge, which is the
+ * case the explainer has always said matters.
+ *
+ * Lives here, next to the window it describes, so the page and the calendar feed phrase
+ * it identically. They already share buildWindows; sharing this keeps them from drifting.
+ */
+export function gustLabel(w: SailWindow): string | null {
+  if (w.gustKtMax === null) return null
+  const gust = Math.round(w.gustKtMax)
+  return gust > Math.round(w.windKtMax) ? `gusting ${gust}` : null
+}
+
+/** "7 to 13 kt gusting 22, NNW/N" ... the one wind phrase every surface uses. */
+export function windPhrase(w: SailWindow): string {
+  const gust = gustLabel(w)
+  const range = `${Math.round(w.windKtMin)} to ${Math.round(w.windKtMax)} kt`
+  return `${range}${gust ? ` ${gust}` : ''}, ${w.directions.join('/')}`
 }
 
 function marginFor(reason: FailReason, h: HourlyConditions, spot: Spot): string {

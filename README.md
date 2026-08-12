@@ -37,8 +37,16 @@ hold. There is no scoring and no partial credit.
 | --- | --- | --- |
 | Daylight | sunrise to sunset | computed from the spot's own coordinates, so it tracks the season |
 | Sustained wind | 5 to 20 kt | below is drifting, above stops being relaxing |
-| Gusts | 30 kt ceiling | a separate field from sustained wind, and the two diverge constantly in valley terrain |
+| Gusts | 25 kt ceiling | a separate field from sustained wind, and the two diverge constantly in valley terrain |
 | Precipitation | under 30% chance | the forecast gives a probability, so a line has to be drawn somewhere |
+
+Every window names its **strongest gust** alongside its sustained range, whenever the
+gust exceeds it: "7 to 13 kt gusting 22, NNW/N". This is not decoration. A window can sit
+comfortably inside the wind band and still be a handful, and for a long time the app knew
+that and did not say it... the gust number appeared only in a near-miss margin, which is
+to say only when a gust was strong enough to *disqualify* the day. Below the ceiling it
+was invisible. A Friday of 11 kt sustained gusting 22 rendered as "7 to 13 kt" and read as
+chill, which is exactly the failure the gust gate exists to prevent.
 
 Consecutive passing hours merge into a **window**. Windows shorter than three hours
 are discarded, on the grounds that a shorter stretch does not justify getting the boat
@@ -147,7 +155,7 @@ Add an entry to `config/spots.ts`:
   lat: 43.90234,
   lon: -73.07574,
   tz: 'America/New_York',
-  wind: { minKt: 5, maxKt: 20, maxGustKt: 30 },
+  wind: { minKt: 5, maxKt: 20, maxGustKt: 25 },
   precip: { maxProbability: 30 },
   window: { minHours: 3 },
   season: { start: { month: 5, day: 1 }, end: { month: 11, day: 1 } },

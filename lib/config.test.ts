@@ -14,7 +14,9 @@ describe('Dunmore spot', () => {
     expect(dunmore!.wind).toEqual({
       minKt: 5,
       maxKt: 20,
-      maxGustKt: 30,
+      // 25, not 30. Lowered 2026-08-12: 30 kt is 35 mph, past where a small lake in
+      // valley terrain is relaxing, and NOAA small-craft advisories start near 25.
+      maxGustKt: 25,
     })
     expect(dunmore!.precip.maxProbability).toBe(30)
     expect(dunmore!.window.minHours).toBe(3)

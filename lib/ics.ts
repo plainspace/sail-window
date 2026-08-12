@@ -7,7 +7,7 @@
 // Pure: no fetching, no clock reads beyond the `now` handed in. Everything it needs
 // comes from the SailWindow[] the page already builds.
 
-import type { SailWindow } from './windows'
+import { windPhrase, gustLabel, type SailWindow } from './windows'
 import type { Spot } from '@/config/spots'
 
 export type CalendarOptions = {
@@ -67,11 +67,13 @@ export function stampUtc(when: string | Date): string {
   return iso.replace(/[-:]/g, '').replace(/\.\d{3}/, '')
 }
 
-const round = (n: number) => Math.round(n)
-
-/** 'Sail: 8 to 13 kt SW' ... phrased exactly like the card on the page. */
+/**
+ * '⛵ Sail: 8 to 13 kt gusting 22, SW' ... the same phrase the card on the page uses,
+ * from the same helper, so a calendar event and the page can never describe one window
+ * two different ways.
+ */
 function summaryFor(w: SailWindow): string {
-  return `⛵ Sail: ${round(w.windKtMin)} to ${round(w.windKtMax)} kt ${w.directions.join('/')}`
+  return `⛵ Sail: ${windPhrase(w)}`
 }
 
 /**
@@ -81,8 +83,11 @@ function summaryFor(w: SailWindow): string {
  */
 function descriptionFor(w: SailWindow, spot: Spot, origin: string): string {
   const hours = w.hours === 1 ? '1 hour' : `${w.hours} hours`
+  const gust = gustLabel(w)
   const lines = [
-    `${hours}, ${w.temperatureFAvg}°F.`,
+    // The gust goes in the first line, not buried under the gate list. It is the one
+    // number that decides whether a window inside the wind band is relaxing or lively.
+    `${hours}, ${w.temperatureFAvg}°F${gust ? `, ${gust} kt` : ''}.`,
     '',
     `Cleared all four gates: daylight, ${spot.wind.minKt} to ${spot.wind.maxKt} kt ` +
       `sustained, gusts under ${spot.wind.maxGustKt} kt, rain under ` +

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildWindows, buildNearMisses } from './windows'
+import { buildWindows, buildNearMisses, windPhrase, type SailWindow } from './windows'
 import { getSpot } from '@/config/spots'
 import type { HourlyConditions } from './nws'
 
@@ -56,6 +56,63 @@ describe('buildWindows', () => {
   it('flags a window containing an hour with an unknown gust', () => {
     const hours = [...run(2), ...run(1, { gustKt: null }, 2)]
     expect(buildWindows(hours, spot)[0].hasUnknownGust).toBe(true)
+  })
+
+  describe('gustKtMax', () => {
+    it('reports the strongest gust in the window', () => {
+      const hours = [...run(1, { gustKt: 14 }), ...run(1, { gustKt: 22 }, 1), ...run(1, { gustKt: 17 }, 2)]
+      expect(buildWindows(hours, spot)[0].gustKtMax).toBe(22)
+    })
+
+    it('ignores unknown gusts rather than treating them as calm', () => {
+      // An hour with no reading must not drag the maximum down to 0. If it did, a
+      // single missing hour would silently make a gusty window look steady.
+      const hours = [...run(1, { gustKt: 21 }), ...run(1, { gustKt: null }, 1), ...run(1, { gustKt: 12 }, 2)]
+      const [w] = buildWindows(hours, spot)
+      expect(w.gustKtMax).toBe(21)
+      expect(w.hasUnknownGust).toBe(true)
+    })
+
+    it('is null when no hour reported a gust at all', () => {
+      expect(buildWindows(run(3, { gustKt: null }), spot)[0].gustKtMax).toBeNull()
+    })
+  })
+})
+
+describe('windPhrase', () => {
+  const win = (over: Partial<SailWindow> = {}): SailWindow => ({
+    start: '2026-08-14T13:00:00.000Z',
+    end: '2026-08-14T16:00:00.000Z',
+    hours: 3,
+    windKtMin: 7.1,
+    windKtMax: 12.5,
+    gustKtMax: 22,
+    directions: ['NNW', 'N'],
+    temperatureFAvg: 74,
+    hasUnknownGust: false,
+    ...over,
+  })
+
+  it('names the gust when it exceeds the sustained maximum', () => {
+    // The Friday that started all this: 12.5 kt sustained, 22 kt gusts. Reading
+    // "7 to 13 kt" alone made it look chill.
+    expect(windPhrase(win())).toBe('7 to 13 kt gusting 22, NNW/N')
+  })
+
+  it('stays quiet when the gust does not exceed the sustained maximum', () => {
+    expect(windPhrase(win({ gustKtMax: 12 }))).toBe('7 to 13 kt, NNW/N')
+  })
+
+  it('stays quiet when the gust equals the rounded sustained maximum', () => {
+    expect(windPhrase(win({ gustKtMax: 12.5 }))).toBe('7 to 13 kt, NNW/N')
+  })
+
+  it('stays quiet when no gust is known', () => {
+    expect(windPhrase(win({ gustKtMax: null }))).toBe('7 to 13 kt, NNW/N')
+  })
+
+  it('rounds the gust the way it rounds the wind', () => {
+    expect(windPhrase(win({ gustKtMax: 21.6 }))).toBe('7 to 13 kt gusting 22, NNW/N')
   })
 
   it('returns nothing when nothing qualifies', () => {

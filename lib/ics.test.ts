@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { buildCalendar, foldLine, escapeText, stampUtc } from './ics'
 import { getSpot } from '@/config/spots'
-import type { SailWindow } from './windows'
+import { windPhrase, type SailWindow } from './windows'
 
 const spot = getSpot('dunmore')!
 const NOW = new Date('2026-08-12T19:37:42.501Z')
@@ -13,6 +13,7 @@ const win = (over: Partial<SailWindow> = {}): SailWindow => ({
   hours: 4,
   windKtMin: 8.2,
   windKtMax: 13.4,
+  gustKtMax: 22,
   directions: ['SW'],
   temperatureFAvg: 74,
   hasUnknownGust: false,
@@ -122,7 +123,35 @@ describe('buildCalendar', () => {
 
   it('rounds the wind into the summary the way the page does', () => {
     const ics = buildCalendar([win({ windKtMin: 8.2, windKtMax: 13.4 })], spot, opts)
-    expect(values(ics, 'SUMMARY')[0]).toContain('8 to 13 kt SW')
+    expect(values(ics, 'SUMMARY')[0]).toContain('8 to 13 kt')
+  })
+
+  describe('gusts', () => {
+    it('names the gust in the summary when it exceeds the sustained maximum', () => {
+      const ics = buildCalendar([win({ gustKtMax: 22 })], spot, opts)
+      expect(values(ics, 'SUMMARY')[0]).toContain('gusting 22')
+    })
+
+    it('omits it when the gust does not exceed the sustained maximum', () => {
+      const ics = buildCalendar([win({ gustKtMax: 11 })], spot, opts)
+      expect(values(ics, 'SUMMARY')[0]).not.toContain('gusting')
+    })
+
+    it('puts the gust in the first line of the body, not under the gate list', () => {
+      const body = values(events(buildCalendar([win({ gustKtMax: 22 })], spot, opts))[0], 'DESCRIPTION')[0]
+      expect(body.split('\\n')[0]).toContain('gusting 22 kt')
+    })
+
+    it('phrases the event exactly as the page phrases the window', () => {
+      // Both call windPhrase. If this ever diverges, a calendar event and the page are
+      // describing one window two different ways, which is the bug this app most
+      // needs to not have.
+      const w = win({ gustKtMax: 22 })
+      const ics = buildCalendar([w], spot, opts)
+      // The property carries the ESCAPED form, so the comma in the phrase arrives as
+      // '\,'. Comparing against the raw phrase would fail for the wrong reason.
+      expect(values(ics, 'SUMMARY')[0]).toBe(escapeText(`⛵ Sail: ${windPhrase(w)}`))
+    })
   })
 
   it('names the gates it cleared using the spot own thresholds', () => {

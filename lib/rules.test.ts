@@ -31,9 +31,9 @@ describe('wind gates', () => {
 })
 
 describe('gust gate', () => {
-  it('accepts exactly 30 and rejects 31', () => {
-    expect(at({ gustKt: 30 }).pass).toBe(true)
-    expect(at({ gustKt: 31 })).toEqual({ pass: false, reasons: ['gusty'] })
+  it('accepts exactly 25 and rejects 26', () => {
+    expect(at({ gustKt: 25 }).pass).toBe(true)
+    expect(at({ gustKt: 26 })).toEqual({ pass: false, reasons: ['gusty'] })
   })
 
   it('never vetoes on a null gust', () => {

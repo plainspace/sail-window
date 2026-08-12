@@ -4,7 +4,7 @@ import { headers } from 'next/headers'
 import { originFrom } from '@/lib/origin'
 import { fetchForecast } from '@/lib/openmeteo'
 import { fetchForecast as fetchNwsForecast, type HourlyConditions } from '@/lib/nws'
-import { buildWindows, buildNearMisses } from '@/lib/windows'
+import { buildWindows, buildNearMisses, windPhrase } from '@/lib/windows'
 import { inSeason } from '@/lib/rules'
 import { WindStrip } from '@/components/WindStrip'
 import { LakeSilhouette } from '@/components/LakeSilhouette'
@@ -109,7 +109,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const headline = !openNow
     ? 'Off season.'
     : next
-      ? `Next window: ${day(next.start)} ${time(next.start)}, ${next.hours} hours, ${Math.round(next.windKtMin)} to ${Math.round(next.windKtMax)} kt ${next.directions.join('/')}`
+      ? `Next window: ${day(next.start)} ${time(next.start)}, ${next.hours} hours, ${windPhrase(next)}`
       : 'Nothing sailable in the next week.'
 
   return (
@@ -197,8 +197,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
                     <strong>{day(w.start)}</strong> {time(w.start)} to {time(w.end)}
                   </span>
                   <span className="card-meta">
-                    {w.hours} hrs · {Math.round(w.windKtMin)} to {Math.round(w.windKtMax)} kt{' '}
-                    {w.directions.join('/')} · {w.temperatureFAvg}&deg;F
+                    {w.hours} hrs · {windPhrase(w)} · {w.temperatureFAvg}&deg;F
                     {w.hasUnknownGust && <span className="flag"> · gust data missing</span>}
                   </span>
                 </li>
@@ -284,8 +283,10 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
               </div>
               <p className="gate-why">
                 A separate field from sustained wind, and the two diverge constantly in
-                valley terrain. Ten sustained gusting twenty-five is a different day from
-                a steady fourteen, and an average cannot tell them apart.
+                valley terrain. Ten sustained gusting twenty-two is a different day from
+                a steady fourteen, and an average cannot tell them apart. So every window
+                names its strongest gust, not just its sustained range... a day can sit
+                comfortably inside the wind band and still be a handful.
               </p>
             </div>
 
