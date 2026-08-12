@@ -101,6 +101,22 @@ main { padding: 0 1.5rem 6rem; }
   margin: 0 0 1.2rem;
 }
 
+/* Home link, sitting on the eyebrow's own line so it costs no vertical space. The hero
+   is a flex row next to the silhouette and a separate line would push the headline
+   down. Muted against the accent-coloured spot name, so the page you are on stays the
+   emphasised half of the pair. Inherits the eyebrow's mono/uppercase/tracking. */
+.home-link {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.12s ease;
+}
+.home-link:hover { color: var(--accent); }
+.home-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.crumb-sep {
+  color: var(--muted);
+  padding: 0 0.4em 0 0.3em;
+}
+
 .headline {
   font-family: var(--display);
   font-weight: 400;

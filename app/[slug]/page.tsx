@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { originFrom } from '@/lib/origin'
@@ -116,7 +117,11 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       <div className="wrap">
         <header className="hero">
           <div className="hero-text">
-            <p className="eyebrow">{spot.name}, {spot.region}</p>
+            <p className="eyebrow">
+              <Link className="home-link" href="/">Sail window</Link>
+              <span className="crumb-sep">/</span>
+              {spot.name}, {spot.region}
+            </p>
             <h1 className="headline">{headline}</h1>
             <p className="standfirst">
               A yes-or-no read on when the conditions actually allow sailing this week,
