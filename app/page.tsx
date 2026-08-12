@@ -17,7 +17,8 @@ export default function Home() {
               This tells you when the conditions are right to sail at one specific place,
               read straight from the Open-Meteo forecast and four plain gates: daylight, a
               sustained wind band, a gust ceiling, and a rain limit. Not a weather report... a
-              yes or no. Days that clear every gate are windows.
+              yes or no. Days that clear every gate are windows. Read them on the page, or
+              subscribe to them as a calendar.
             </p>
           </div>
         </header>
@@ -52,6 +53,23 @@ export default function Home() {
           </ul>
         </section>
 
+        <section className="block">
+          <h2>Or put it in your calendar</h2>
+          <p className="lede">
+            Every spot publishes its windows as a calendar feed at{' '}
+            <code>/&lt;slug&gt;/calendar.ics</code>, so the answer can sit next to the rest
+            of your week instead of on a page you have to remember to open. Open a spot and
+            click <strong>Subscribe to these windows</strong>.
+          </p>
+          <p className="lede">
+            Subscribe to it rather than downloading it. Each refetch replaces the whole
+            feed, so windows appear and disappear as the forecast changes instead of going
+            stale in your calendar. Events are marked free, never busy... a forecast is not
+            a commitment. Out of season, and in a week with nothing sailable, the feed is
+            simply empty.
+          </p>
+        </section>
+
         <section className="block explainer">
           <h2>Add your own spot</h2>
           <p>
@@ -66,7 +84,8 @@ export default function Home() {
             </li>
             <li>
               Open <code>/your-slug</code>. Open-Meteo needs no key and no setup, so the
-              forecast just works from the coordinates.
+              forecast just works from the coordinates. The calendar feed at{' '}
+              <code>/your-slug/calendar.ics</code> comes with it, nothing to configure.
             </li>
             <li>
               Optionally set <code>NWS_CONTACT</code> in your environment. It is only used for
