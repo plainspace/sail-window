@@ -204,18 +204,27 @@ Expect this to take longer than you think, which is why it is optional.
 
 ## Ideas not built
 
-- **A JSON endpoint.** The app only emits HTML. An `/api` route returning windows and
-  near misses is the prerequisite for anything else on this list.
+- **A JSON endpoint.** The app emits HTML and iCalendar, both of them shaped for a
+  particular reader. An `/api` route returning windows and near misses as plain JSON
+  would serve anything that wants the data in a general form.
 - **iOS widget.** A widget is arguably the right form factor: "can I sail today" is a
   glance, not a session. Three paths, very different costs: a native app with WidgetKit,
   a [Scriptable](https://scriptable.app) widget in JavaScript with no App Store, or a
   Shortcut. All three need the JSON endpoint first.
 - **Notifications.** Sailing is intermittent, and an app you must remember to open gets
-  opened twice. Being told when a window appears is more useful than being able to look
-  it up.
+  opened twice. The calendar feed gets partway there, since a window lands in your week
+  without you going looking for it. It cannot tell you a window has *appeared*, though.
+  A subscription only shows the current answer; nothing announces that it changed.
 - **Forecast stability.** Retaining each fetch would let the app show how long a window
   has survived across successive forecasts. A window seven days out is a model artifact
-  as often as a plan, and today the app treats it as equally real.
+  as often as a plan, and today the app treats it as equally real. The calendar makes
+  this visible in a way the page did not: an event five days out can shrink or vanish
+  between one refresh and the next, and nothing in the feed says how many successive
+  forecasts have agreed on it.
+- **A maximum window length.** Windows have a floor and no ceiling, so a day that
+  clears every gate from dawn to dusk becomes one thirteen-hour block. On the page that
+  is a line in a list. On a calendar it is drawn to scale and reads as a commitment
+  rather than an option.
 
 ## Licence
 
