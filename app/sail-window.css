@@ -109,6 +109,11 @@ main { padding: 0 1.5rem 6rem; }
   color: var(--muted);
   text-decoration: none;
   transition: color 0.12s ease;
+  /* The text is 0.7rem, which measured 13px tall on a phone... a miserable tap target.
+     Vertical padding on an INLINE element grows the hit area without growing the line
+     box, so the eyebrow stays one 18px line and the headline does not move. */
+  padding: 0.62rem 0.2rem;
+  margin-left: -0.2rem;
 }
 .home-link:hover { color: var(--accent); }
 .home-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
