@@ -108,9 +108,11 @@ What the events do:
   rather than in the all-day strip.
 - **Marked free, not busy** (`TRANSP:TRANSPARENT`). A forecast is not a commitment, and
   nobody checking your availability should see a lake blocking a Wednesday.
-- **Self-describing.** Each event names the hours, the temperature, and the four gates
-  it cleared, using the spot's own thresholds, so it still means something when you
-  open it a week later with no page around it.
+- **Self-describing.** The title carries the sustained range, the strongest gust, and
+  the direction, phrased identically to the card on the page because both call the same
+  helper. The body adds the hours, the temperature, and the four gates it cleared, using
+  the spot's own thresholds, so the event still means something when you open it a week
+  later with no page around it.
 - **No alarms.** Being *notified* when a window appears is a different feature with its
   own design questions, and it is still unbuilt. See below.
 - **Empty out of season**, and empty in a week with no windows. It stays a valid, named
