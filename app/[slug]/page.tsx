@@ -58,10 +58,6 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const origin = originFrom(await headers())
   const feedUrl = `${origin}/${spot.slug}/calendar.ics`
   const feedWebcal = feedUrl.replace(/^https?:/, 'webcal:')
-  // Relative, so it cannot inherit a wrong host, and it carries the download attribute
-  // as well as ?download=1... the attribute covers same-origin clicks, the query string
-  // covers anyone who copies the URL.
-  const feedDownload = `/${spot.slug}/calendar.ics?download=1`
 
   // Second opinion. NWS is US-only and human-adjusted, and Vermont forecasters tend
   // to knock wind down for sheltered valleys, which is often wrong for the middle of
@@ -210,32 +206,26 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
           )}
 
           <div className="subscribe">
-            <div className="subscribe-actions">
-              <a className="subscribe-link" href={feedWebcal}>
-                Subscribe to these windows
-              </a>
-              {/* "Download a snapshot", not "Download this week". Both buttons cover the
-                  same week, so scope differentiates nothing... the difference is that one
-                  keeps updating and one does not, and the label has to carry that. */}
-              <a className="subscribe-link" href={feedDownload} download>
-                Download a snapshot
-              </a>
-            </div>
+            {/* One button, deliberately. A download button was tried and removed: an
+                imported .ics is a copy with no link back to this URL, so it never
+                updates, and explaining that difference took more words than the feature
+                is worth. Both routes below are subscriptions, so both stay current, and
+                nobody has to understand iCalendar semantics to pick one. */}
+            <a className="subscribe-link" href={feedWebcal}>
+              Subscribe to these windows
+            </a>
             <p className="subscribe-note">
-              <strong>Subscribe</strong> adds a calendar that refetches itself, so windows
-              appear and disappear as the forecast changes.{' '}
-              <strong>Download</strong> hands you a one-off file, which is simpler but is a
-              snapshot: importing only ever adds and updates, never removes, so a window the
-              forecast later drops will sit on your calendar until you delete it yourself.
-              Either way the events show as free, never busy.
+              Adds a calendar that keeps itself current: windows appear and disappear as
+              the forecast changes, so it never goes stale. The events show as free, never
+              busy.
             </p>
             <p className="subscribe-note">
-              If <em>Subscribe</em> opens a browser instead of your calendar, nothing is
-              broken here... your system has <code>webcal:</code> registered to the wrong
-              app, which browsers do quietly. Add it by URL instead: paste{' '}
-              <code>{feedUrl}</code> into your calendar's <em>subscribe</em> or{' '}
-              <em>add by URL</em> field. That route avoids the scheme entirely and is also
-              what Google Calendar wants.
+              If that opens a browser instead of your calendar, your system has{' '}
+              <code>webcal:</code> pointed at the wrong app. Paste this into your calendar's{' '}
+              <em>subscribe</em> or <em>add by URL</em> field instead... it does the same
+              thing, and it is also what Google Calendar wants:
+              <br />
+              <code>{feedUrl}</code>
             </p>
           </div>
         </section>
