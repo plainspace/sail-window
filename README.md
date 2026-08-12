@@ -85,15 +85,25 @@ remember to open.
 https://sail-window.vercel.app/dunmore/calendar.ics
 ```
 
-Subscribe to it. Do not download it. A downloaded `.ics` is a snapshot, and a forecast
-snapshot is wrong by dinner. A subscription is refetched, and because each fetch
-replaces the whole feed, a window the model withdraws simply disappears... which is
-also why there is no delete logic anywhere in `lib/ics.ts`.
+Prefer subscribing over downloading. A subscription is refetched, and because each fetch
+replaces the whole feed, a window the model withdraws simply disappears... which is also
+why there is no delete logic anywhere in `lib/ics.ts`. An import has no such mechanism:
+it only ever adds and updates, never removes, so a window the forecast later drops sits
+on your calendar until you delete it by hand. That is worse than a stale event, because
+it still looks live.
+
+Downloading is offered anyway, at `?download=1`, which serves the same bytes with
+`Content-Disposition: attachment` instead of `inline`. Subscribing depends on the OS
+having `webcal:` registered to a calendar, and browsers quietly claim that handler...
+at which point the button opens a browser tab and the whole feature looks broken. A
+download needs no scheme, no handler and no client configuration. It is the escape
+hatch, not the recommendation.
 
 **Apple Calendar** ... click **Subscribe to these windows** on the spot page, which
 hands the `webcal:` URL straight to the subscribe dialog. Then set **Auto-refresh** on
 the subscription; it goes down to every five minutes, and the feed advertises hourly as
-a default.
+a default. If that button opens a browser instead, `webcal:` is registered to the wrong
+app; use *File → New Calendar Subscription* and paste the `https:` URL instead.
 
 **Google Calendar** ... *Other calendars* → *From URL*, and paste the `https:` URL shown
 under the same link. Google polls external feeds on its own undocumented schedule,

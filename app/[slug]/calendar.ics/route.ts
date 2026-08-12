@@ -30,10 +30,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     now: new Date(),
   })
 
+  // ?download=1 forces a file rather than letting the browser decide. Subscribing is
+  // the better mode and stays the default, but it depends on the OS having `webcal:`
+  // registered to a calendar, and browsers quietly claim that handler... at which point
+  // the button opens a browser tab and the feature looks broken. A download needs no
+  // scheme, no handler and no client configuration, so it is the escape hatch.
+  const wantsDownload = new URL(request.url).searchParams.has('download')
+
   return new Response(body, {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
-      'Content-Disposition': `inline; filename="${spot.slug}-sailing.ics"`,
+      'Content-Disposition': `${wantsDownload ? 'attachment' : 'inline'}; filename="${spot.slug}-sailing.ics"`,
       // Let a CDN absorb repeated polls for 15 minutes, matching the upstream cache,
       // while never letting a client hold onto it.
       'Cache-Control': 'public, max-age=0, s-maxage=900, stale-while-revalidate=3600',

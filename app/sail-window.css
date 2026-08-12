@@ -558,6 +558,9 @@ code {
    not the point of the page... so it gets the spot-link hover treatment rather than a
    filled button competing with the headline. */
 .subscribe { margin-top: 1.2rem; }
+/* Wraps rather than overflowing: two mono labels at 0.78rem do not fit side by side on
+   a narrow phone, and the page must never scroll sideways. */
+.subscribe-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .subscribe-link {
   display: inline-block;
   font-family: var(--mono);

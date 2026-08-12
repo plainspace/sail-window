@@ -58,6 +58,10 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const origin = originFrom(await headers())
   const feedUrl = `${origin}/${spot.slug}/calendar.ics`
   const feedWebcal = feedUrl.replace(/^https?:/, 'webcal:')
+  // Relative, so it cannot inherit a wrong host, and it carries the download attribute
+  // as well as ?download=1... the attribute covers same-origin clicks, the query string
+  // covers anyone who copies the URL.
+  const feedDownload = `/${spot.slug}/calendar.ics?download=1`
 
   // Second opinion. NWS is US-only and human-adjusted, and Vermont forecasters tend
   // to knock wind down for sheltered valleys, which is often wrong for the middle of
@@ -206,19 +210,29 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
           )}
 
           <div className="subscribe">
-            <a className="subscribe-link" href={feedWebcal}>
-              Subscribe to these windows
-            </a>
+            <div className="subscribe-actions">
+              <a className="subscribe-link" href={feedWebcal}>
+                Subscribe to these windows
+              </a>
+              <a className="subscribe-link" href={feedDownload} download>
+                Download this week
+              </a>
+            </div>
             <p className="subscribe-note">
-              Adds a calendar that refetches itself, so windows appear and disappear as
-              the forecast changes rather than going stale. They show as free, never busy.
+              <strong>Subscribe</strong> adds a calendar that refetches itself, so windows
+              appear and disappear as the forecast changes.{' '}
+              <strong>Download</strong> hands you a one-off file, which is simpler but is a
+              snapshot: importing only ever adds and updates, never removes, so a window the
+              forecast later drops will sit on your calendar until you delete it yourself.
+              Either way the events show as free, never busy.
             </p>
             <p className="subscribe-note">
-              If that opens a browser instead of your calendar, nothing is broken here...
-              your system has <code>webcal:</code> registered to the wrong app, which
-              browsers do quietly. Add it by URL instead: paste <code>{feedUrl}</code> into
-              your calendar's <em>subscribe</em> or <em>add by URL</em> field. That route
-              avoids the scheme entirely and is also what Google Calendar wants.
+              If <em>Subscribe</em> opens a browser instead of your calendar, nothing is
+              broken here... your system has <code>webcal:</code> registered to the wrong
+              app, which browsers do quietly. Add it by URL instead: paste{' '}
+              <code>{feedUrl}</code> into your calendar's <em>subscribe</em> or{' '}
+              <em>add by URL</em> field. That route avoids the scheme entirely and is also
+              what Google Calendar wants.
             </p>
           </div>
         </section>
