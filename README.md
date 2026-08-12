@@ -67,6 +67,50 @@ not appear anywhere, and the day simply looked shorter than it was.
 - **Wind direction** is displayed but never gates anything. Whether a direction is good
   depends on your water, and the app does not presume to know.
 
+## Subscribe to it as a calendar
+
+Every spot publishes its sailable windows as an iCalendar feed at `/<slug>/calendar.ics`,
+so the answer shows up next to the rest of your week instead of on a page you have to
+remember to open.
+
+```text
+https://sail-window.vercel.app/dunmore/calendar.ics
+```
+
+Subscribe to it. Do not download it. A downloaded `.ics` is a snapshot, and a forecast
+snapshot is wrong by dinner. A subscription is refetched, and because each fetch
+replaces the whole feed, a window the model withdraws simply disappears... which is
+also why there is no delete logic anywhere in `lib/ics.ts`.
+
+**Apple Calendar** ... click **Subscribe to these windows** on the spot page, which
+hands the `webcal:` URL straight to the subscribe dialog. Then set **Auto-refresh** on
+the subscription; it goes down to every five minutes, and the feed advertises hourly as
+a default.
+
+**Google Calendar** ... *Other calendars* → *From URL*, and paste the `https:` URL shown
+under the same link. Google polls external feeds on its own undocumented schedule,
+commonly some hours, and ignores the refresh interval the feed asks for. That matters
+less than it sounds: the horizon here is seven days, and a window on Thursday does not
+move much in an afternoon. It does mean today's row can lag the page, so for today,
+look at the page.
+
+What the events do:
+
+- **One timed event per window**, on the real hours, so it lands against your meetings
+  rather than in the all-day strip.
+- **Marked free, not busy** (`TRANSP:TRANSPARENT`). A forecast is not a commitment, and
+  nobody checking your availability should see a lake blocking a Wednesday.
+- **Self-describing.** Each event names the hours, the temperature, and the four gates
+  it cleared, using the spot's own thresholds, so it still means something when you
+  open it a week later with no page around it.
+- **No alarms.** Being *notified* when a window appears is a different feature with its
+  own design questions, and it is still unbuilt. See below.
+- **Empty out of season**, and empty in a week with no windows. It stays a valid, named
+  calendar either way, so an empty week is distinguishable from a broken feed... the
+  same reason near misses exist on the page.
+
+The feed is public, exactly as public as the page, and carries no per-user token.
+
 ## Run it locally
 
 Requires Node 20 or newer.

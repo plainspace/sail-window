@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
+import { originFrom } from '@/lib/origin'
 import { fetchForecast } from '@/lib/openmeteo'
 import { fetchForecast as fetchNwsForecast, type HourlyConditions } from '@/lib/nws'
 import { buildWindows, buildNearMisses } from '@/lib/windows'
@@ -48,6 +50,13 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const misses = buildNearMisses(hours, spot)
   const next = windows[0]
   const openNow = inSeason(new Date().toISOString(), spot)
+
+  // The calendar feed, offered two ways. The webcal: scheme makes Apple Calendar open
+  // its subscribe dialog on click; the https: form is what Google Calendar's "add by
+  // URL" field wants, so both are shown rather than making anyone rewrite a scheme.
+  const origin = originFrom(await headers())
+  const feedUrl = `${origin}/${spot.slug}/calendar.ics`
+  const feedWebcal = feedUrl.replace(/^https?:/, 'webcal:')
 
   // Second opinion. NWS is US-only and human-adjusted, and Vermont forecasters tend
   // to knock wind down for sheltered valleys, which is often wrong for the middle of
@@ -191,6 +200,17 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
               ))}
             </ul>
           )}
+
+          <div className="subscribe">
+            <a className="subscribe-link" href={feedWebcal}>
+              Subscribe to these windows
+            </a>
+            <p className="subscribe-note">
+              Adds a calendar that refetches itself, so windows appear and disappear as
+              the forecast changes rather than going stale. They show as free, never
+              busy. To add it by hand instead, paste <code>{feedUrl}</code>.
+            </p>
+          </div>
         </section>
 
         <section className="block">

@@ -532,6 +532,39 @@ code {
 }
 .tag.good { background: var(--pass-soft); color: var(--pass); }
 
+/* ---- Calendar subscription ---- */
+/* Deliberately quiet. It sits under the windows it mirrors, and it is a convenience,
+   not the point of the page... so it gets the spot-link hover treatment rather than a
+   filled button competing with the headline. */
+.subscribe { margin-top: 1.2rem; }
+.subscribe-link {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  text-decoration: none;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0.42rem 0.75rem;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.subscribe-link:hover { border-color: var(--water); background: var(--water-soft); }
+.subscribe-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.subscribe-note {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0.65rem 0 0;
+  max-width: 36rem;
+}
+.subscribe-note code {
+  font-family: var(--mono);
+  font-size: 0.94em;
+  color: var(--ink-soft);
+  /* The URL is long and must not push the page into a horizontal scroll on a phone. */
+  overflow-wrap: anywhere;
+}
+
 /* ---- Explainer gates ---- */
 .gates { display: flex; flex-direction: column; gap: 0.9rem; margin: 1.4rem 0 0.5rem; }
 .gate {
